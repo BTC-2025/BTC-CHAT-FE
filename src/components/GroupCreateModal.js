@@ -114,7 +114,7 @@ export default function GroupCreateModal({ open, onClose, onCreated }) {
     const fetchContacts = async () => {
       setLoadingContacts(true);
       try {
-        const { data } = await axios.get("http://localhost:5001/api/chats", {
+        const { data } = await axios.get("https://btc-chat-be.onrender.com/api/chats", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
 

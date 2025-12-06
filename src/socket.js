@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-export const socket = io("http://localhost:5001", {
+export const socket = io("https://btc-chat-be.onrender.com", {
   autoConnect: false,
   auth: (cb) => {
     // set userId at connect time

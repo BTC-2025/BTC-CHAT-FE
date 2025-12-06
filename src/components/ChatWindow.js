@@ -377,7 +377,7 @@ export default function ChatWindow({ chat }) {
   const load = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5001/api/messages/${chat.id}`,
+        `https://btc-chat-be.onrender.com/api/messages/${chat.id}`,
         {
           headers: { Authorization: `Bearer ${user?.token}` },
         }

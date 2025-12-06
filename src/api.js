@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// ✅ FIX BASE URL (correct backend port)
-const API_BASE = "http://localhost:5001/api";
+// ✅ Production backend URL
+const API_BASE = "https://btc-chat-be.onrender.com/api";
 
 export const api = axios.create({
   baseURL: API_BASE,

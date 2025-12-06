@@ -16,7 +16,7 @@ export default function SearchBar({ onOpen }) {
 
     try {
       const { data } = await axios.get(
-        `http://localhost:5001/api/users/search/${phone}`,
+        `https://btc-chat-be.onrender.com/api/users/search/${phone}`,
         {
           headers: {
             Authorization: `Bearer ${user?.token}`, // ✅ Add token
@@ -33,7 +33,7 @@ export default function SearchBar({ onOpen }) {
   const openChat = async () => {
     try {
       const { data } = await axios.post(
-        "http://localhost:5001/api/chats/open",
+        "https://btc-chat-be.onrender.com/api/chats/open",
         { targetPhone: result.phone },
         {
           headers: {

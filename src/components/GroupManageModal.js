@@ -12,7 +12,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const load = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:5001/api/groups/${chatId}`,
+        `https://btc-chat-be.onrender.com/api/groups/${chatId}`,
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
 
@@ -32,7 +32,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const addMember = async () => {
     try {
       await axios.post(
-        `http://localhost:5001/api/groups/${chatId}/members`,
+        `https://btc-chat-be.onrender.com/api/groups/${chatId}/members`,
         { phone },
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
@@ -46,7 +46,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const removeMember = async (phone) => {
     try {
       await axios.delete(
-        `http://localhost:5001/api/groups/${chatId}/members`,
+        `https://btc-chat-be.onrender.com/api/groups/${chatId}/members`,
         {
           data: { phone },
           headers: { Authorization: `Bearer ${user?.token}` },
@@ -61,7 +61,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const toggleAdmin = async (phone, promote) => {
     try {
       await axios.post(
-        `http://localhost:5001/api/groups/${chatId}/admins`,
+        `https://btc-chat-be.onrender.com/api/groups/${chatId}/admins`,
         { phone, promote },
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
@@ -74,7 +74,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const saveMeta = async () => {
     try {
       await axios.patch(
-        `http://localhost:5001/api/groups/${chatId}`,
+        `https://btc-chat-be.onrender.com/api/groups/${chatId}`,
         meta,
         {
           headers: { Authorization: `Bearer ${user?.token}` },
