@@ -365,6 +365,14 @@ export default function ChatWindow({ chat }) {
   const scrollerRef = useRef(null);
   const [openManage, setOpenManage] = useState(false);
 
+  // ✅ Block state
+  const [blockStatus, setBlockStatus] = useState({
+    iBlockedThem: false,
+    theyBlockedMe: false,
+    isBlocked: false
+  });
+  const [blockError, setBlockError] = useState("");
+
   // ✅ Load messages (backend masks deleted messages)
   const load = async () => {
     try {
@@ -392,6 +400,63 @@ export default function ChatWindow({ chat }) {
     isOnline: chat.other?.isOnline,
     lastSeen: chat.other?.lastSeen,
   });
+
+  // ✅ Check block status when chat opens (for 1:1 chats)
+  useEffect(() => {
+    if (chat.isGroup || !chat.other?.id) return;
+
+    socket.emit("user:checkBlocked", { targetUserId: chat.other.id }, (res) => {
+      if (res?.success) {
+        setBlockStatus({
+          iBlockedThem: res.iBlockedThem,
+          theyBlockedMe: res.theyBlockedMe,
+          isBlocked: res.isBlocked
+        });
+      }
+    });
+  }, [chat.id, chat.other?.id, chat.isGroup]);
+
+  // ✅ Listen for message errors (blocked)
+  useEffect(() => {
+    const onError = ({ error }) => {
+      setBlockError(error);
+      setTimeout(() => setBlockError(""), 3000);
+    };
+
+    socket.on("message:error", onError);
+    return () => socket.off("message:error", onError);
+  }, []);
+
+  // ✅ Listen for real-time block/unblock notifications
+  useEffect(() => {
+    if (chat.isGroup || !chat.other?.id) return;
+
+    const onBlockedBy = ({ blockedBy, targetUserId }) => {
+      // If current user was blocked by the chat partner
+      if (blockedBy === chat.other.id && targetUserId === user.id) {
+        setBlockStatus(prev => ({ ...prev, theyBlockedMe: true, isBlocked: true }));
+      }
+    };
+
+    const onUnblockedBy = ({ unblockedBy, targetUserId }) => {
+      // If current user was unblocked by the chat partner
+      if (unblockedBy === chat.other.id && targetUserId === user.id) {
+        setBlockStatus(prev => ({
+          ...prev,
+          theyBlockedMe: false,
+          isBlocked: prev.iBlockedThem
+        }));
+      }
+    };
+
+    socket.on("user:blockedBy", onBlockedBy);
+    socket.on("user:unblockedBy", onUnblockedBy);
+
+    return () => {
+      socket.off("user:blockedBy", onBlockedBy);
+      socket.off("user:unblockedBy", onUnblockedBy);
+    };
+  }, [chat.id, chat.other?.id, chat.isGroup, user.id]);
 
   // ✅ Load + listen new messages
   useEffect(() => {
@@ -518,6 +583,29 @@ export default function ChatWindow({ chat }) {
     });
   };
 
+  // ✅ Block/Unblock handlers
+  const handleBlock = () => {
+    if (!chat.other?.id) return;
+    socket.emit("user:block", { targetUserId: chat.other.id }, (res) => {
+      if (res?.success) {
+        setBlockStatus(prev => ({ ...prev, iBlockedThem: true, isBlocked: true }));
+      }
+    });
+  };
+
+  const handleUnblock = () => {
+    if (!chat.other?.id) return;
+    socket.emit("user:unblock", { targetUserId: chat.other.id }, (res) => {
+      if (res?.success) {
+        setBlockStatus(prev => ({
+          ...prev,
+          iBlockedThem: false,
+          isBlocked: prev.theyBlockedMe
+        }));
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col h-full">
 
@@ -552,7 +640,37 @@ export default function ChatWindow({ chat }) {
             Group Info
           </button>
         )}
+
+        {/* ✅ BLOCK/UNBLOCK BUTTON (for 1:1 chats only) */}
+        {!chat.isGroup && (
+          <button
+            onClick={blockStatus.iBlockedThem ? handleUnblock : handleBlock}
+            className={`text-xs px-2 py-1 rounded ${blockStatus.iBlockedThem
+              ? "bg-green-700 hover:bg-green-600"
+              : "bg-red-700 hover:bg-red-600"
+              }`}
+          >
+            {blockStatus.iBlockedThem ? "Unblock" : "Block"}
+          </button>
+        )}
       </div>
+
+      {/* ✅ Block Error/Status Banner */}
+      {blockError && (
+        <div className="bg-red-900/50 text-red-300 text-sm px-4 py-2 text-center">
+          {blockError}
+        </div>
+      )}
+      {blockStatus.theyBlockedMe && !blockStatus.iBlockedThem && (
+        <div className="bg-yellow-900/50 text-yellow-300 text-sm px-4 py-2 text-center">
+          You cannot send messages to this user.
+        </div>
+      )}
+      {blockStatus.iBlockedThem && (
+        <div className="bg-neutral-800 text-neutral-400 text-sm px-4 py-2 text-center">
+          You have blocked this user. Unblock to send messages.
+        </div>
+      )}
 
       {/* ✅ Messages Area */}
       <div
@@ -572,7 +690,15 @@ export default function ChatWindow({ chat }) {
 
       {/* ✅ Input */}
       <div className="border-t border-neutral-700 p-3">
-        <ChatInput onSend={send} />
+        {blockStatus.isBlocked ? (
+          <div className="text-center text-neutral-500 py-2">
+            {blockStatus.iBlockedThem
+              ? "Unblock this user to send messages"
+              : "You cannot send messages to this user"}
+          </div>
+        ) : (
+          <ChatInput onSend={send} />
+        )}
       </div>
 
       {/* ✅ Group Manage Modal */}
