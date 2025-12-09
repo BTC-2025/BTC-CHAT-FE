@@ -29,7 +29,34 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
     if (user?.token) load();
   }, [user]);
 
-  // ✅ unread badge realtime update
+  // ✅ Listen for new messages to update sidebar in real-time
+  useEffect(() => {
+    const onNewMessage = (msg) => {
+      setChats((prev) => {
+        const updated = prev.map((c) => {
+          if (c.id === msg.chat) {
+            return {
+              ...c,
+              lastMessage: msg.body || "[attachment]",
+              lastAt: msg.createdAt,
+              // Increment unread if not the active chat and not sent by current user
+              unread: (msg.sender !== user?.id && msg.sender?._id !== user?.id)
+                ? (c.unread || 0) + 1
+                : c.unread
+            };
+          }
+          return c;
+        });
+        // Sort by lastAt to move updated chat to top
+        return updated.sort((a, b) => new Date(b.lastAt) - new Date(a.lastAt));
+      });
+    };
+
+    socket.on("message:new", onNewMessage);
+    return () => socket.off("message:new", onNewMessage);
+  }, [user?.id]);
+
+  // ✅ Unread badge reset
   useEffect(() => {
     const onUnreadReset = ({ chatId, unreadResetFor }) => {
       if (!user) return;
