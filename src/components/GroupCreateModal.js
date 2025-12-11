@@ -164,12 +164,23 @@ export default function GroupCreateModal({ open, onClose, onCreated }) {
 
     setLoading(true);
 
+    // ✅ Ensure socket is connected
+    if (!socket.connected) {
+      socket.connect();
+    }
+
     // ✅ Get phone numbers of selected members
     const phones = contacts
       .filter((c) => selectedMembers.includes(c.id))
       .map((c) => c.phone);
 
-    // ✅ Emit socket event
+    // ✅ Set timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setLoading(false);
+      alert("Group creation timed out. Please try again.");
+    }, 15000);
+
+    // ✅ Emit socket event with proper callback handling
     socket.emit(
       "group:create",
       {
@@ -177,13 +188,19 @@ export default function GroupCreateModal({ open, onClose, onCreated }) {
         description,
         participants: phones,
       },
-      () => {
+      (response) => {
+        clearTimeout(timeout);
         setLoading(false);
-        setTitle("");
-        setDescription("");
-        setSelectedMembers([]);
-        if (onCreated) onCreated();
-        onClose();
+
+        if (response?.success) {
+          setTitle("");
+          setDescription("");
+          setSelectedMembers([]);
+          if (onCreated) onCreated();
+          onClose();
+        } else {
+          alert(response?.error || "Failed to create group. Please try again.");
+        }
       }
     );
   };

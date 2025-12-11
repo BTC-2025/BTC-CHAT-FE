@@ -477,10 +477,30 @@ export default function ChatWindow({ chat, onBack }) {
       });
     };
 
+    // ✅ Handle message pinned
+    const onPinned = ({ chatId, message }) => {
+      if (chatId !== chat.id) return;
+      setMessages((prev) =>
+        prev.map((m) => (m._id === message._id ? { ...m, isPinned: true } : m))
+      );
+    };
+
+    // ✅ Handle message unpinned
+    const onUnpinned = ({ chatId, messageId }) => {
+      if (chatId !== chat.id) return;
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? { ...m, isPinned: false } : m))
+      );
+    };
+
     socket.on("message:new", onNew);
+    socket.on("message:pinned", onPinned);
+    socket.on("message:unpinned", onUnpinned);
 
     return () => {
       socket.off("message:new", onNew);
+      socket.off("message:pinned", onPinned);
+      socket.off("message:unpinned", onUnpinned);
     };
   }, [chat.id, user.id]);
 
@@ -730,6 +750,43 @@ export default function ChatWindow({ chat, onBack }) {
       {blockStatus.iBlockedThem && (
         <div className="bg-slate-800 text-slate-400 text-xs sm:text-sm px-3 sm:px-4 py-2 text-center">
           You have blocked this user. Unblock to send messages.
+        </div>
+      )}
+
+      {/* ✅ Pinned Messages Section */}
+      {messages.filter(m => m.isPinned).length > 0 && (
+        <div className="bg-blue-900/30 border-b border-blue-800/50 px-3 sm:px-4 py-2">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-blue-400 text-xs sm:text-sm font-semibold">📌 Pinned Messages</span>
+            <span className="text-blue-300 text-[10px] sm:text-xs">
+              ({messages.filter(m => m.isPinned).length})
+            </span>
+          </div>
+          <div className="space-y-2 max-h-32 overflow-y-auto">
+            {messages.filter(m => m.isPinned).map((m) => (
+              <div
+                key={`pinned-${m._id}`}
+                className="flex items-start justify-between gap-2 bg-slate-800/50 rounded-lg px-3 py-2"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] text-blue-300 mb-0.5">
+                    {m.sender?.full_name || (m.sender === user.id ? "You" : "User")}
+                  </div>
+                  <div className="text-xs sm:text-sm text-white truncate">
+                    {m.body?.substring(0, 100) || "[attachment]"}
+                    {m.body?.length > 100 ? "..." : ""}
+                  </div>
+                </div>
+                <button
+                  onClick={() => socket.emit("message:unpin", { messageId: m._id, chatId: chat.id })}
+                  className="text-[10px] text-slate-400 hover:text-red-400 flex-shrink-0"
+                  title="Unpin"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

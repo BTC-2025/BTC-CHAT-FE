@@ -251,11 +251,26 @@ export default function MessageBubble({ message, mine, isGroup }) {
         </button>
 
         {menuOpen && (
-          <div className="absolute right-0 mt-1 bg-neutral-800 rounded-lg shadow-lg 
-                          p-2 text-xs min-w-[140px] border border-neutral-700 z-30">
+          <div className="absolute right-0 mt-1 bg-slate-800 rounded-lg shadow-lg 
+                          p-2 text-xs min-w-[140px] border border-slate-700 z-30">
+
+            {/* Pin/Unpin button */}
+            <button
+              className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded text-blue-400"
+              onClick={() => {
+                if (message.isPinned) {
+                  socket.emit("message:unpin", { messageId: message._id, chatId: message.chat });
+                } else {
+                  socket.emit("message:pin", { messageId: message._id, chatId: message.chat });
+                }
+                setMenuOpen(false);
+              }}
+            >
+              {message.isPinned ? "📌 Unpin" : "📌 Pin"}
+            </button>
 
             <button
-              className="block w-full text-left px-2 py-1 hover:bg-neutral-700 rounded"
+              className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded"
               onClick={deleteForMe}
             >
               Delete for me
@@ -263,7 +278,7 @@ export default function MessageBubble({ message, mine, isGroup }) {
 
             {mine && (
               <button
-                className="block w-full text-left px-2 py-1 hover:bg-neutral-700 rounded text-red-400"
+                className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded text-red-400"
                 onClick={deleteForEveryone}
               >
                 Delete for everyone

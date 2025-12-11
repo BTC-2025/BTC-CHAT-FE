@@ -8,8 +8,12 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const [group, setGroup] = useState(null);
   const [phone, setPhone] = useState("");
   const [meta, setMeta] = useState({ title: "", description: "" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const load = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const { data } = await axios.get(
         `https://btc-chat-be.onrender.com/api/groups/${chatId}`,
@@ -19,15 +23,51 @@ export default function GroupManageModal({ chatId, open, onClose }) {
       setGroup(data);
       setMeta({ title: data.title, description: data.description });
     } catch (e) {
-      console.error(e);
+      console.error("Group info error:", e);
+      setError(e.response?.data?.message || "Failed to load group info");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (open) load();
+    if (open && chatId) {
+      setGroup(null); // Reset on open
+      load();
+    }
   }, [open, chatId]);
 
-  if (!open || !group) return null;
+  if (!open) return null;
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/60 grid place-items-center z-50 p-4">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md text-center">
+          <div className="text-white">Loading group info...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black/60 grid place-items-center z-50 p-4">
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md">
+          <div className="text-red-400 mb-4">{error}</div>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-slate-600 rounded-lg hover:bg-slate-500"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!group) return null;
 
   const addMember = async () => {
     try {

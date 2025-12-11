@@ -39,7 +39,6 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
               ...c,
               lastMessage: msg.body || "[attachment]",
               lastAt: msg.createdAt,
-              // Increment unread if not the active chat and not sent by current user
               unread: (msg.sender !== user?.id && msg.sender?._id !== user?.id)
                 ? (c.unread || 0) + 1
                 : c.unread
@@ -47,8 +46,7 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
           }
           return c;
         });
-        // Sort by lastAt to move updated chat to top
-        return updated.sort((a, b) => new Date(b.lastAt) - new Date(a.lastAt));
+        return sortChats(updated, user?.id);
       });
     };
 
@@ -70,6 +68,46 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
     socket.on("chats:update", onUnreadReset);
     return () => socket.off("chats:update", onUnreadReset);
   }, [user]);
+
+  // ✅ Listen for chat pin/unpin events
+  useEffect(() => {
+    const onChatPinned = ({ chatId }) => {
+      setChats((prev) => {
+        const updated = prev.map((c) =>
+          c.id === chatId ? { ...c, isPinned: true } : c
+        );
+        return sortChats(updated, user?.id);
+      });
+    };
+
+    const onChatUnpinned = ({ chatId }) => {
+      setChats((prev) => {
+        const updated = prev.map((c) =>
+          c.id === chatId ? { ...c, isPinned: false } : c
+        );
+        return sortChats(updated, user?.id);
+      });
+    };
+
+    socket.on("chat:pinned", onChatPinned);
+    socket.on("chat:unpinned", onChatUnpinned);
+    return () => {
+      socket.off("chat:pinned", onChatPinned);
+      socket.off("chat:unpinned", onChatUnpinned);
+    };
+  }, [user?.id]);
+
+  // ✅ Sort function: pinned first, then by lastAt
+  const sortChats = (chatList, userId) => {
+    return [...chatList].sort((a, b) => {
+      const aIsPinned = a.isPinned || a.pinnedBy?.includes(userId);
+      const bIsPinned = b.isPinned || b.pinnedBy?.includes(userId);
+
+      if (aIsPinned && !bIsPinned) return -1;
+      if (!aIsPinned && bIsPinned) return 1;
+      return new Date(b.lastAt) - new Date(a.lastAt);
+    });
+  };
 
   return (
     <div className="flex flex-col h-full bg-slate-900 text-white">
@@ -108,8 +146,9 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
       {/* ✅ Chat List */}
       <div className="flex-1 overflow-y-auto">
         <ChatList
-          items={chats}
+          items={sortChats(chats, user?.id)}
           activeId={activeChatId}
+          userId={user?.id}
           onOpen={(chat) => {
             onOpenChat(chat);
             setChats((prev) =>
@@ -131,3 +170,4 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
     </div>
   );
 }
+
