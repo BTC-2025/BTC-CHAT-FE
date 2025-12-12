@@ -6,13 +6,17 @@ export default function Login() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async () => {
     if (!phone || !password) return;
     setLoading(true);
+    setError("");
     try {
       await login(phone, password);
-    } finally {
+      // On success, user state changes and app navigates away
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed. Please try again.");
       setLoading(false);
     }
   };
@@ -20,6 +24,13 @@ export default function Login() {
   return (
     <div className="space-y-3">
       <h2 className="text-lg sm:text-xl font-semibold text-primary">Welcome back</h2>
+
+      {error && (
+        <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
       <input
         className="w-full bg-white border border-background-dark rounded-lg px-3 py-2.5 text-sm sm:text-base outline-none focus:ring-2 focus:ring-secondary transition-shadow text-primary placeholder:text-primary/50"
         placeholder="Phone"
@@ -55,3 +66,4 @@ export default function Login() {
     </div>
   );
 }
+

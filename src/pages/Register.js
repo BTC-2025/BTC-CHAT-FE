@@ -7,13 +7,17 @@ export default function Register() {
   const [full_name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleRegister = async () => {
     if (!phone || !full_name || !password) return;
     setLoading(true);
+    setError("");
     try {
       await register(phone, full_name, password);
-    } finally {
+      // On success, user state changes and app navigates away
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
       setLoading(false);
     }
   };
@@ -21,6 +25,13 @@ export default function Register() {
   return (
     <div className="space-y-3">
       <h2 className="text-lg sm:text-xl font-semibold text-primary">Create account</h2>
+
+      {error && (
+        <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
       <input
         className="w-full bg-white border border-background-dark rounded-lg px-3 py-2.5 text-sm sm:text-base outline-none focus:ring-2 focus:ring-secondary transition-shadow text-primary placeholder:text-primary/50"
         placeholder="Phone"
@@ -63,3 +74,4 @@ export default function Register() {
     </div>
   );
 }
+
