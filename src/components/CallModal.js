@@ -8,6 +8,21 @@ const ICE_SERVERS = {
     ],
 };
 
+// Create ringtone sound using Web Audio API
+const createRingtone = (audioContext, isOutgoing = false) => {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = isOutgoing ? 440 : 480; // Different pitch for outgoing vs incoming
+    gainNode.gain.value = 0.3;
+
+    return { oscillator, gainNode };
+};
+
 export default function CallModal({ callState, onClose, userId }) {
     const [callStatus, setCallStatus] = useState("idle"); // idle, calling, ringing, connected
     const [isMuted, setIsMuted] = useState(false);
@@ -16,14 +31,53 @@ export default function CallModal({ callState, onClose, userId }) {
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
+    const remoteAudioRef = useRef(null); // For audio calls
     const peerConnectionRef = useRef(null);
     const localStreamRef = useRef(null);
     const durationIntervalRef = useRef(null);
+    const ringtoneIntervalRef = useRef(null);
+    const audioContextRef = useRef(null);
 
     const { isOpen, callType, targetUserId, targetName, isIncoming, callerId, callerName } = callState;
 
+    // Play ringtone
+    const startRingtone = useCallback((isOutgoing) => {
+        try {
+            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+
+            const playTone = () => {
+                const { oscillator, gainNode } = createRingtone(audioContextRef.current, isOutgoing);
+                oscillator.start();
+
+                // Ring pattern: 0.5s on, 0.3s off for outgoing, 1s on, 2s off for incoming
+                setTimeout(() => {
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContextRef.current.currentTime + 0.1);
+                    setTimeout(() => oscillator.stop(), 100);
+                }, isOutgoing ? 500 : 1000);
+            };
+
+            playTone();
+            ringtoneIntervalRef.current = setInterval(playTone, isOutgoing ? 800 : 3000);
+        } catch (err) {
+            console.log("Could not play ringtone:", err);
+        }
+    }, []);
+
+    // Stop ringtone
+    const stopRingtone = useCallback(() => {
+        if (ringtoneIntervalRef.current) {
+            clearInterval(ringtoneIntervalRef.current);
+            ringtoneIntervalRef.current = null;
+        }
+        if (audioContextRef.current) {
+            audioContextRef.current.close();
+            audioContextRef.current = null;
+        }
+    }, []);
+
     // Cleanup function
     const cleanup = useCallback(() => {
+        stopRingtone();
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => track.stop());
             localStreamRef.current = null;
@@ -40,7 +94,7 @@ export default function CallModal({ callState, onClose, userId }) {
         setCallDuration(0);
         setIsMuted(false);
         setIsCameraOff(false);
-    }, []);
+    }, [stopRingtone]);
 
     // Initialize media and peer connection
     const initializeCall = useCallback(async (isInitiator) => {
@@ -53,7 +107,7 @@ export default function CallModal({ callState, onClose, userId }) {
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             localStreamRef.current = stream;
 
-            if (localVideoRef.current) {
+            if (localVideoRef.current && callType === "video") {
                 localVideoRef.current.srcObject = stream;
             }
 
@@ -68,8 +122,13 @@ export default function CallModal({ callState, onClose, userId }) {
 
             // Handle incoming remote stream
             pc.ontrack = (event) => {
-                if (remoteVideoRef.current && event.streams[0]) {
-                    remoteVideoRef.current.srcObject = event.streams[0];
+                console.log("Received remote track:", event.track.kind);
+                if (event.streams[0]) {
+                    if (callType === "video" && remoteVideoRef.current) {
+                        remoteVideoRef.current.srcObject = event.streams[0];
+                    } else if (callType === "audio" && remoteAudioRef.current) {
+                        remoteAudioRef.current.srcObject = event.streams[0];
+                    }
                 }
             };
 
@@ -85,7 +144,9 @@ export default function CallModal({ callState, onClose, userId }) {
 
             // Connection state changes
             pc.onconnectionstatechange = () => {
+                console.log("Connection state:", pc.connectionState);
                 if (pc.connectionState === "connected") {
+                    stopRingtone();
                     setCallStatus("connected");
                     // Start duration timer
                     durationIntervalRef.current = setInterval(() => {
@@ -109,31 +170,43 @@ export default function CallModal({ callState, onClose, userId }) {
             alert("Could not access camera/microphone. Please check permissions.");
             handleEndCall();
         }
-    }, [callType, isIncoming, callerId, targetUserId]);
+    }, [callType, isIncoming, callerId, targetUserId, stopRingtone]);
 
     // Handle outgoing call initiation
     useEffect(() => {
         if (isOpen && !isIncoming && callStatus === "idle") {
             setCallStatus("calling");
+            startRingtone(true); // Play dialing sound
             socket.emit("call:initiate", { targetUserId, callType }, (response) => {
                 if (!response?.success) {
+                    stopRingtone();
                     alert(response?.error || "Failed to initiate call");
                     onClose();
                 }
             });
         }
-    }, [isOpen, isIncoming, targetUserId, callType, callStatus, onClose]);
+    }, [isOpen, isIncoming, targetUserId, callType, callStatus, onClose, startRingtone, stopRingtone]);
+
+    // Play ringtone for incoming calls
+    useEffect(() => {
+        if (isOpen && isIncoming && callStatus === "idle") {
+            startRingtone(false); // Play incoming ringtone
+        }
+        return () => stopRingtone();
+    }, [isOpen, isIncoming, callStatus, startRingtone, stopRingtone]);
 
     // Socket event listeners
     useEffect(() => {
         if (!isOpen) return;
 
         const handleAccepted = async ({ recipientId }) => {
+            stopRingtone();
             setCallStatus("connecting");
             await initializeCall(true);
         };
 
         const handleRejected = () => {
+            stopRingtone();
             alert("Call was rejected");
             cleanup();
             onClose();
@@ -163,7 +236,11 @@ export default function CallModal({ callState, onClose, userId }) {
         const handleIceCandidate = async ({ candidate }) => {
             const pc = peerConnectionRef.current;
             if (pc && candidate) {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (err) {
+                    console.log("ICE candidate error:", err);
+                }
             }
         };
 
@@ -187,10 +264,11 @@ export default function CallModal({ callState, onClose, userId }) {
             socket.off("call:ice-candidate", handleIceCandidate);
             socket.off("call:ended", handleEnded);
         };
-    }, [isOpen, initializeCall, cleanup, onClose]);
+    }, [isOpen, initializeCall, cleanup, onClose, stopRingtone]);
 
     // Accept incoming call
     const handleAcceptCall = async () => {
+        stopRingtone();
         setCallStatus("connecting");
         socket.emit("call:accept", { callerId });
         await initializeCall(false);
@@ -198,6 +276,7 @@ export default function CallModal({ callState, onClose, userId }) {
 
     // Reject incoming call
     const handleRejectCall = () => {
+        stopRingtone();
         socket.emit("call:reject", { callerId });
         cleanup();
         onClose();
@@ -205,6 +284,7 @@ export default function CallModal({ callState, onClose, userId }) {
 
     // End call
     const handleEndCall = () => {
+        stopRingtone();
         socket.emit("call:end", { targetUserId: isIncoming ? callerId : targetUserId });
         cleanup();
         onClose();
@@ -245,6 +325,9 @@ export default function CallModal({ callState, onClose, userId }) {
 
     return (
         <div className="fixed inset-0 bg-black/95 z-[200] flex flex-col">
+            {/* Hidden audio element for audio calls */}
+            <audio ref={remoteAudioRef} autoPlay playsInline />
+
             {/* Incoming call UI */}
             {isIncoming && callStatus === "idle" && (
                 <div className="flex-1 flex flex-col items-center justify-center text-white">
@@ -294,7 +377,7 @@ export default function CallModal({ callState, onClose, userId }) {
                         {/* Audio-only placeholder */}
                         {callType === "audio" && (
                             <div className="w-full h-full flex flex-col items-center justify-center text-white">
-                                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-5xl font-bold mb-6">
+                                <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-5xl font-bold mb-6 ${callStatus !== "connected" ? "animate-pulse" : ""}`}>
                                     {displayName?.[0]?.toUpperCase() || "?"}
                                 </div>
                                 <h2 className="text-2xl font-semibold mb-2">{displayName}</h2>
@@ -344,12 +427,12 @@ export default function CallModal({ callState, onClose, userId }) {
                         )}
                     </div>
 
-                    {/* Controls */}
-                    <div className="p-6 bg-black/80 flex items-center justify-center gap-6">
+                    {/* Controls - Always visible at bottom */}
+                    <div className="p-6 pb-8 bg-gradient-to-t from-black to-black/80 flex items-center justify-center gap-8 safe-area-bottom">
                         {/* Mute button */}
                         <button
                             onClick={toggleMute}
-                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${isMuted ? "bg-red-500" : "bg-white/20 hover:bg-white/30"
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${isMuted ? "bg-red-500" : "bg-white/20 hover:bg-white/30"
                                 }`}
                         >
                             {isMuted ? (
@@ -364,11 +447,21 @@ export default function CallModal({ callState, onClose, userId }) {
                             )}
                         </button>
 
+                        {/* END CALL button - Large and prominent */}
+                        <button
+                            onClick={handleEndCall}
+                            className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all shadow-xl ring-4 ring-red-500/30"
+                        >
+                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
+                            </svg>
+                        </button>
+
                         {/* Camera toggle (video calls only) */}
                         {callType === "video" && (
                             <button
                                 onClick={toggleCamera}
-                                className={`w-14 h-14 rounded-full flex items-center justify-center transition-colors ${isCameraOff ? "bg-red-500" : "bg-white/20 hover:bg-white/30"
+                                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-lg ${isCameraOff ? "bg-red-500" : "bg-white/20 hover:bg-white/30"
                                     }`}
                             >
                                 {isCameraOff ? (
@@ -383,19 +476,10 @@ export default function CallModal({ callState, onClose, userId }) {
                                 )}
                             </button>
                         )}
-
-                        {/* End call button */}
-                        <button
-                            onClick={handleEndCall}
-                            className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                        >
-                            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
-                            </svg>
-                        </button>
                     </div>
                 </>
             )}
         </div>
     );
 }
+
