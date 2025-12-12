@@ -553,13 +553,33 @@ export default function ChatWindow({ chat, onBack }) {
 
   // ✅ Real-time delete sync
   useEffect(() => {
-    const onDeleted = ({ messageId, forEveryone }) => {
-      load(); // 🔥 simplest and safest sync method
+    const onDeletedEveryone = ({ messageId, chatId: eventChatId }) => {
+      // Only update if event is for current chat
+      if (eventChatId !== chat.id) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === messageId ? { ...m, deletedForEveryone: true } : m
+        )
+      );
     };
 
-    socket.on("message:deleted", onDeleted);
-    return () => socket.off("message:deleted", onDeleted);
-  }, [user.id]);
+    const onDeletedMe = ({ messageId, chatId: eventChatId }) => {
+      // Only update if event is for current chat
+      if (eventChatId !== chat.id) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m._id === messageId ? { ...m, deletedFor: [...(m.deletedFor || []), user.id] } : m
+        )
+      );
+    };
+
+    socket.on("message:deleted:everyone", onDeletedEveryone);
+    socket.on("message:deleted:me", onDeletedMe);
+    return () => {
+      socket.off("message:deleted:everyone", onDeletedEveryone);
+      socket.off("message:deleted:me", onDeletedMe);
+    };
+  }, [chat.id, user.id]);
 
   // ✅ Typing & presence
   useEffect(() => {
@@ -802,6 +822,7 @@ export default function ChatWindow({ chat, onBack }) {
             mine={m.sender === user.id || m.sender?._id === user.id}
             chatId={chat.id}
             isGroup={chat.isGroup}
+            isAdmin={chat.isGroup && chat.admins?.includes(user.id)}
           />
         ))}
       </div>

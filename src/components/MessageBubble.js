@@ -187,7 +187,7 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import { socket } from "../socket";
 
-export default function MessageBubble({ message, mine, isGroup }) {
+export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   // ✅ Determine if deleted
@@ -219,7 +219,8 @@ export default function MessageBubble({ message, mine, isGroup }) {
   };
 
   const deleteForEveryone = () => {
-    if (!mine) return;
+    // ✅ Allow if sender OR admin (admin check is done by UI showing the button)
+    if (!mine && !isAdmin) return;
     socket.emit("message:delete", {
       messageId: message._id,
       forEveryone: true
@@ -276,7 +277,8 @@ export default function MessageBubble({ message, mine, isGroup }) {
               Delete for me
             </button>
 
-            {mine && (
+            {/* Show "Delete for everyone" for sender OR admin in groups */}
+            {(mine || isAdmin) && (
               <button
                 className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded text-red-400"
                 onClick={deleteForEveryone}
