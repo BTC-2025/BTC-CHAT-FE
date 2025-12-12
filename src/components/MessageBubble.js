@@ -337,6 +337,22 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
                     controls
                     className="max-w-full max-h-60 rounded-lg"
                   />
+                ) : att.type === "audio" ? (
+                  <div className={`flex items-center gap-3 p-2 rounded-xl ${mine ? "bg-white/10" : "bg-background-dark/50"
+                    }`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${mine ? "bg-white/20" : "bg-secondary/20"
+                      }`}>
+                      <svg className={`w-5 h-5 ${mine ? "text-white" : "text-secondary"}`} fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.94-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.06 7.44-7 7.93V22h-2v-6.07z" />
+                      </svg>
+                    </div>
+                    <audio
+                      src={att.url}
+                      controls
+                      className="h-8 flex-1"
+                      style={{ minWidth: "150px" }}
+                    />
+                  </div>
                 ) : (
                   <a
                     href={att.url}
