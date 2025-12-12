@@ -207,50 +207,50 @@ export default function GroupCreateModal({ open, onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 w-full max-w-md rounded-xl p-4 sm:p-5 border border-slate-700 max-h-[90vh] overflow-hidden flex flex-col">
-        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-white">Create Group</h2>
+      <div className="bg-white w-full max-w-md rounded-xl p-4 sm:p-5 border border-background-dark max-h-[90vh] overflow-hidden flex flex-col shadow-xl">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-primary">Create Group</h2>
 
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-slate-700 px-3 py-2.5 rounded-lg mb-3 outline-none text-sm sm:text-base focus:ring-2 focus:ring-blue-500 transition-shadow"
+          className="w-full bg-background border border-background-dark px-3 py-2.5 rounded-lg mb-3 outline-none text-sm sm:text-base focus:ring-2 focus:ring-secondary transition-shadow text-primary placeholder:text-primary/50"
           placeholder="Group name"
         />
 
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full bg-slate-700 px-3 py-2.5 rounded-lg mb-3 outline-none text-sm sm:text-base focus:ring-2 focus:ring-blue-500 transition-shadow"
+          className="w-full bg-background border border-background-dark px-3 py-2.5 rounded-lg mb-3 outline-none text-sm sm:text-base focus:ring-2 focus:ring-secondary transition-shadow text-primary placeholder:text-primary/50"
           placeholder="Group description (optional)"
         />
 
         {/* ✅ Contact Selection */}
-        <div className="text-xs sm:text-sm text-slate-400 mb-2">Select Members:</div>
+        <div className="text-xs sm:text-sm text-primary/60 mb-2">Select Members:</div>
 
-        <div className="flex-1 overflow-y-auto bg-slate-700 rounded-lg p-2 mb-4 max-h-48">
+        <div className="flex-1 overflow-y-auto bg-background border border-background-dark rounded-lg p-2 mb-4 max-h-48">
           {loadingContacts ? (
-            <div className="text-slate-400 text-sm p-2">Loading contacts...</div>
+            <div className="text-primary/60 text-sm p-2">Loading contacts...</div>
           ) : contacts.length === 0 ? (
-            <div className="text-slate-400 text-sm p-2">No contacts found. Start a chat first.</div>
+            <div className="text-primary/60 text-sm p-2">No contacts found. Start a chat first.</div>
           ) : (
             contacts.map((contact) => (
               <label
                 key={contact.id}
-                className="flex items-center gap-3 p-2 hover:bg-slate-600 rounded-lg cursor-pointer transition-colors"
+                className="flex items-center gap-3 p-2 hover:bg-background-dark rounded-lg cursor-pointer transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={selectedMembers.includes(contact.id)}
                   onChange={() => toggleMember(contact.id)}
-                  className="w-4 h-4 accent-blue-600"
+                  className="w-4 h-4 accent-secondary"
                 />
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 grid place-items-center text-xs font-semibold uppercase">
+                  <div className="w-8 h-8 rounded-full bg-primary grid place-items-center text-xs font-semibold uppercase text-white">
                     {contact.name?.[0] || "?"}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium truncate">{contact.name}</div>
-                    <div className="text-xs text-slate-400">{contact.phone}</div>
+                    <div className="text-sm font-medium truncate text-primary">{contact.name}</div>
+                    <div className="text-xs text-primary/60">{contact.phone}</div>
                   </div>
                 </div>
               </label>
@@ -260,21 +260,21 @@ export default function GroupCreateModal({ open, onClose, onCreated }) {
 
         {/* ✅ Selected count */}
         {selectedMembers.length > 0 && (
-          <div className="text-xs text-blue-400 mb-3">
+          <div className="text-xs text-secondary-dark mb-3">
             {selectedMembers.length} member{selectedMembers.length > 1 ? "s" : ""} selected
           </div>
         )}
 
         <div className="flex justify-end gap-2 sm:gap-3">
           <button
-            className="px-3 sm:px-4 py-2 bg-slate-600 rounded-lg hover:bg-slate-500 text-sm font-medium transition-colors"
+            className="px-3 sm:px-4 py-2 bg-background-dark rounded-lg hover:bg-background text-primary text-sm font-medium transition-colors"
             onClick={onClose}
           >
             Cancel
           </button>
 
           <button
-            className="px-3 sm:px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500 disabled:opacity-50 text-sm font-medium transition-colors"
+            className="px-3 sm:px-4 py-2 bg-primary rounded-lg hover:bg-primary-light disabled:opacity-50 text-sm font-medium transition-colors text-white"
             onClick={createGroup}
             disabled={loading}
           >

@@ -672,47 +672,55 @@ export default function ChatWindow({ chat, onBack }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-950">
+    <div className="flex flex-col h-full bg-gradient-to-b from-background to-background-dark">
 
-      {/* ✅ HEADER */}
-      <div className="px-3 sm:px-4 py-3 bg-blue-900 border-b border-slate-700 flex justify-between items-center gap-2">
+      {/* ✅ HEADER with gradient and shadow */}
+      <div className="px-4 sm:px-5 py-3.5 bg-gradient-to-r from-primary to-primary-light shadow-header flex justify-between items-center gap-3">
 
         {/* LEFT - Back button + Name */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {/* Back button (mobile only) */}
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-1.5 hover:bg-blue-800 rounded-lg transition-colors"
+              className="md:hidden p-2 hover:bg-white/10 rounded-xl transition-all duration-200 text-white"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           )}
 
-          {/* Avatar */}
-          <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full grid place-items-center text-xs sm:text-sm font-semibold flex-shrink-0 ${chat.isGroup ? "bg-indigo-600" : "bg-blue-600"
-            }`}>
-            {chat.isGroup
-              ? (chat.title?.[0] || "G")
-              : (chat.other?.full_name?.[0] || chat.other?.phone?.slice(-2))}
+          {/* Avatar with gradient and online indicator */}
+          <div className="relative">
+            <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full grid place-items-center text-sm font-bold flex-shrink-0 text-white shadow-md ${chat.isGroup
+              ? "bg-gradient-to-br from-secondary-dark to-secondary"
+              : "bg-gradient-to-br from-secondary to-secondary-light"
+              }`}>
+              {chat.isGroup
+                ? (chat.title?.[0] || "G")
+                : (chat.other?.full_name?.[0] || chat.other?.phone?.slice(-2))}
+            </div>
+            {/* Online indicator */}
+            {!chat.isGroup && presence.isOnline && (
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-primary animate-pulse" />
+            )}
           </div>
 
           <div className="min-w-0">
-            <div className="font-semibold text-sm sm:text-base truncate">
+            <div className="font-bold text-sm sm:text-base truncate text-white">
               {chat.isGroup ? chat.title : chat.other.full_name || chat.other.phone}
             </div>
 
-            <div className="text-[10px] sm:text-xs text-blue-200">
+            <div className="text-[10px] sm:text-xs text-secondary/90 font-medium flex items-center gap-1">
               {chat.isGroup
                 ? "Group"
                 : typing
-                  ? "Typing…"
+                  ? <span className="animate-pulse-soft">Typing...</span>
                   : presence.isOnline
-                    ? "🟢 Online"
+                    ? "Online"
                     : chat.other?.lastSeen
-                      ? `last seen ${new Date(chat.other.lastSeen).toLocaleString()}`
+                      ? `last seen ${new Date(chat.other.lastSeen).toLocaleTimeString()}`
                       : ""}
             </div>
           </div>
@@ -723,8 +731,11 @@ export default function ChatWindow({ chat, onBack }) {
           {chat.isGroup && (
             <button
               onClick={() => setOpenManage(true)}
-              className="text-[10px] sm:text-xs bg-blue-800 hover:bg-blue-700 px-2 sm:px-3 py-1.5 rounded-lg transition-colors"
+              className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl transition-all duration-200 font-semibold flex items-center gap-1.5 ring-1 ring-white/20"
             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               Info
             </button>
           )}
@@ -732,9 +743,9 @@ export default function ChatWindow({ chat, onBack }) {
           {!chat.isGroup && (
             <button
               onClick={blockStatus.iBlockedThem ? handleUnblock : handleBlock}
-              className={`text-[10px] sm:text-xs px-2 sm:px-3 py-1.5 rounded-lg transition-colors ${blockStatus.iBlockedThem
-                ? "bg-green-700 hover:bg-green-600"
-                : "bg-red-700 hover:bg-red-600"
+              className={`text-xs px-3 py-2 rounded-xl transition-all duration-200 font-semibold ring-1 ${blockStatus.iBlockedThem
+                ? "bg-green-500/20 text-green-300 hover:bg-green-500/30 ring-green-500/30"
+                : "bg-red-500/20 text-red-300 hover:bg-red-500/30 ring-red-500/30"
                 }`}
             >
               {blockStatus.iBlockedThem ? "Unblock" : "Block"}
@@ -745,11 +756,11 @@ export default function ChatWindow({ chat, onBack }) {
           {onBack && (
             <button
               onClick={onBack}
-              className="p-1.5 hover:bg-blue-800 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-xl transition-all duration-200 text-white hidden sm:block"
               title="Close chat"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           )}
@@ -768,17 +779,17 @@ export default function ChatWindow({ chat, onBack }) {
         </div>
       )}
       {blockStatus.iBlockedThem && (
-        <div className="bg-slate-800 text-slate-400 text-xs sm:text-sm px-3 sm:px-4 py-2 text-center">
+        <div className="bg-background-dark text-primary/60 text-xs sm:text-sm px-3 sm:px-4 py-2 text-center">
           You have blocked this user. Unblock to send messages.
         </div>
       )}
 
       {/* ✅ Pinned Messages Section */}
       {messages.filter(m => m.isPinned).length > 0 && (
-        <div className="bg-blue-900/30 border-b border-blue-800/50 px-3 sm:px-4 py-2">
+        <div className="bg-secondary/10 border-b border-secondary/20 px-3 sm:px-4 py-2">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-blue-400 text-xs sm:text-sm font-semibold">📌 Pinned Messages</span>
-            <span className="text-blue-300 text-[10px] sm:text-xs">
+            <span className="text-secondary-dark text-xs sm:text-sm font-semibold">📌 Pinned Messages</span>
+            <span className="text-primary/60 text-[10px] sm:text-xs">
               ({messages.filter(m => m.isPinned).length})
             </span>
           </div>
@@ -786,20 +797,20 @@ export default function ChatWindow({ chat, onBack }) {
             {messages.filter(m => m.isPinned).map((m) => (
               <div
                 key={`pinned-${m._id}`}
-                className="flex items-start justify-between gap-2 bg-slate-800/50 rounded-lg px-3 py-2"
+                className="flex items-start justify-between gap-2 bg-white/80 rounded-lg px-3 py-2 shadow-sm"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] text-blue-300 mb-0.5">
+                  <div className="text-[10px] text-secondary-dark mb-0.5">
                     {m.sender?.full_name || (m.sender === user.id ? "You" : "User")}
                   </div>
-                  <div className="text-xs sm:text-sm text-white truncate">
+                  <div className="text-xs sm:text-sm text-primary truncate">
                     {m.body?.substring(0, 100) || "[attachment]"}
                     {m.body?.length > 100 ? "..." : ""}
                   </div>
                 </div>
                 <button
                   onClick={() => socket.emit("message:unpin", { messageId: m._id, chatId: chat.id })}
-                  className="text-[10px] text-slate-400 hover:text-red-400 flex-shrink-0"
+                  className="text-[10px] text-primary/40 hover:text-red-500 flex-shrink-0"
                   title="Unpin"
                 >
                   ✕
@@ -813,7 +824,7 @@ export default function ChatWindow({ chat, onBack }) {
       {/* ✅ Messages Area */}
       <div
         ref={scrollerRef}
-        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2"
+        className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 bg-background"
       >
         {messages.map((m) => (
           <MessageBubble
@@ -828,9 +839,9 @@ export default function ChatWindow({ chat, onBack }) {
       </div>
 
       {/* ✅ Input */}
-      <div className="border-t border-slate-700 p-2 sm:p-3 bg-slate-900">
+      <div className="border-t border-background-dark p-2 sm:p-3 bg-white">
         {blockStatus.isBlocked ? (
-          <div className="text-center text-slate-500 py-2 text-sm">
+          <div className="text-center text-primary/50 py-2 text-sm">
             {blockStatus.iBlockedThem
               ? "Unblock this user to send messages"
               : "You cannot send messages to this user"}

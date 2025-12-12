@@ -51,10 +51,10 @@ export default function ChatInput({ onSend, chatId }) {
   };
 
   return (
-    <div className="flex gap-2 items-end">
+    <div className="flex gap-3 items-end">
       <textarea
         ref={textareaRef}
-        className="flex-1 bg-slate-800 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 outline-none resize-none overflow-y-auto text-sm sm:text-base focus:ring-2 focus:ring-blue-500 transition-shadow"
+        className="flex-1 bg-white/80 backdrop-blur-sm border border-background-dark/50 rounded-2xl px-4 py-3 outline-none resize-none overflow-y-auto text-sm sm:text-base focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all duration-200 text-primary placeholder:text-primary/40 shadow-sm"
         placeholder="Type a message..."
         value={val}
         onChange={handleChange}
@@ -64,11 +64,12 @@ export default function ChatInput({ onSend, chatId }) {
       />
       <button
         onClick={submit}
-        className="px-3 sm:px-4 py-2.5 sm:py-3 bg-blue-600 rounded-xl hover:bg-blue-500 transition-colors font-medium text-sm sm:text-base"
+        disabled={!val.trim()}
+        className="px-4 sm:px-5 py-3 bg-gradient-to-r from-primary to-primary-light rounded-2xl hover:from-primary-light hover:to-primary transition-all duration-200 font-semibold text-sm sm:text-base text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
       >
         <span className="hidden sm:inline">Send</span>
-        <svg className="w-5 h-5 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
         </svg>
       </button>
     </div>

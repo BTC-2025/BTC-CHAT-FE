@@ -11,8 +11,8 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-900 grid place-items-center p-4 sm:p-6">
-        <div className="w-full max-w-md bg-slate-800 rounded-2xl p-4 sm:p-6 shadow-2xl">
+      <div className="min-h-screen bg-background grid place-items-center p-4 sm:p-6">
+        <div className="w-full max-w-md bg-white rounded-2xl p-4 sm:p-6 shadow-2xl border border-background-dark">
           {/* Logo */}
           <div className="text-center mb-6">
             <img
@@ -20,20 +20,20 @@ export default function App() {
               alt="BTC Chat"
               className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 rounded-xl"
             />
-            <h1 className="text-xl sm:text-2xl font-bold text-blue-400">BTC Chat</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-primary">BTC Chat</h1>
           </div>
 
           {/* Tab buttons */}
           <div className="flex gap-2 mb-4">
             <button
-              className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors ${mode === 'login' ? 'bg-primary text-white' : 'bg-background text-primary hover:bg-background-dark'
                 }`}
               onClick={() => setMode("login")}
             >
               Login
             </button>
             <button
-              className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors ${mode === 'register' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              className={`flex-1 px-3 py-2 rounded-lg font-medium text-sm sm:text-base transition-colors ${mode === 'register' ? 'bg-primary text-white' : 'bg-background text-primary hover:bg-background-dark'
                 }`}
               onClick={() => setMode("register")}
             >

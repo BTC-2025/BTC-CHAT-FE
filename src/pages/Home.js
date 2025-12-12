@@ -24,7 +24,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-slate-900">
+    <div className="h-screen w-screen overflow-hidden bg-background">
       <div className="h-full w-full flex">
 
         {/* ✅ SIDEBAR - Hidden on mobile when chat is open */}
@@ -32,7 +32,7 @@ export default function Home() {
           ${activeChat ? 'hidden' : 'flex'} 
           md:flex
           w-full md:w-1/3 lg:w-1/4 
-          h-full overflow-hidden border-r border-slate-700
+          h-full overflow-hidden border-r border-background-dark
           flex-col
         `}>
           <Sidebar
@@ -56,10 +56,10 @@ export default function Home() {
               onBack={handleBack}
             />
           ) : (
-            <div className="h-full grid place-items-center text-slate-400 p-4 text-center">
+            <div className="h-full grid place-items-center text-primary/60 p-4 text-center bg-background">
               <div>
-                <img src={logo} alt="BTC Chat" className="w-20 h-20 mx-auto mb-4 rounded-xl opacity-50" />
-                <div className="text-xl font-semibold text-slate-500 mb-2">BTC - Chat</div>
+                <img src={logo} alt="BTC Chat" className="w-20 h-20 mx-auto mb-4 rounded-xl opacity-80" />
+                <div className="text-xl font-semibold text-primary mb-2">BTC - Chat</div>
                 <div className="text-sm">Select a chat or search by phone to start messaging.</div>
               </div>
             </div>

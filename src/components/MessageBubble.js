@@ -232,7 +232,7 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
   if (isDeleted) {
     return (
       <div className={`max-w-[75%] ${mine ? "ml-auto" : ""}`}>
-        <div className="bg-neutral-800 text-neutral-400 italic px-3 py-2 rounded-xl text-sm">
+        <div className="bg-background-dark text-primary/50 italic px-3 py-2 rounded-xl text-sm">
           This message was deleted
         </div>
       </div>
@@ -240,64 +240,80 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
   }
 
   return (
-    <div className={`relative max-w-[75%] ${mine ? "ml-auto" : ""}`}>
-
-      {/* ⋮ Menu */}
-      <div className="absolute -top-2 -right-2 z-20">
-        <button
-          className="text-neutral-400 text-sm hover:text-neutral-200"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          ⋮
-        </button>
-
-        {menuOpen && (
-          <div className="absolute right-0 mt-1 bg-slate-800 rounded-lg shadow-lg 
-                          p-2 text-xs min-w-[140px] border border-slate-700 z-30">
-
-            {/* Pin/Unpin button */}
-            <button
-              className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded text-blue-400"
-              onClick={() => {
-                if (message.isPinned) {
-                  socket.emit("message:unpin", { messageId: message._id, chatId: message.chat });
-                } else {
-                  socket.emit("message:pin", { messageId: message._id, chatId: message.chat });
-                }
-                setMenuOpen(false);
-              }}
-            >
-              {message.isPinned ? "📌 Unpin" : "📌 Pin"}
-            </button>
-
-            <button
-              className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded"
-              onClick={deleteForMe}
-            >
-              Delete for me
-            </button>
-
-            {/* Show "Delete for everyone" for sender OR admin in groups */}
-            {(mine || isAdmin) && (
-              <button
-                className="block w-full text-left px-2 py-1 hover:bg-slate-700 rounded text-red-400"
-                onClick={deleteForEveryone}
-              >
-                Delete for everyone
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* ✅ Chat Bubble */}
+    <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+      {/* ✅ Chat Bubble with modern styling - fits content */}
       <div
-        className={`rounded-2xl px-3 sm:px-4 py-2 max-w-[85%] sm:max-w-[75%] ${mine ? "bg-blue-600" : "bg-slate-800"
+        className={`relative inline-block rounded-2xl px-4 py-2.5 animate-fade-in max-w-[75%] ${mine
+          ? "bg-gradient-to-br from-primary to-primary-light text-white rounded-br-md shadow-bubble"
+          : "bg-white text-primary rounded-bl-md shadow-card border border-background-dark/50"
           }`}
       >
+        {/* ⋮ Menu - inside the bubble */}
+        <div className="absolute top-1 right-1 z-50">
+          <button
+            className={`text-lg leading-none p-1 rounded transition-colors ${mine
+                ? "text-white/50 hover:text-white hover:bg-white/10"
+                : "text-primary/40 hover:text-primary hover:bg-black/5"
+              }`}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            ⋮
+          </button>
+
+          {menuOpen && (
+            <div className={`absolute mt-1 bg-white rounded-lg shadow-xl 
+                            p-2 text-xs min-w-[140px] border border-background-dark z-50 ${mine ? "right-0" : "left-0"
+              }`}>
+
+              {/* Pin/Unpin button */}
+              <button
+                className="block w-full text-left px-2 py-1 hover:bg-background-dark rounded text-secondary-dark"
+                onClick={() => {
+                  if (message.isPinned) {
+                    socket.emit("message:unpin", { messageId: message._id, chatId: message.chat });
+                  } else {
+                    socket.emit("message:pin", { messageId: message._id, chatId: message.chat });
+                  }
+                  setMenuOpen(false);
+                }}
+              >
+                {message.isPinned ? "📌 Unpin" : "📌 Pin"}
+              </button>
+
+              <button
+                className="block w-full text-left px-2 py-1 hover:bg-background-dark rounded text-primary"
+                onClick={deleteForMe}
+              >
+                Delete for me
+              </button>
+
+              {/* Show "Delete for everyone" for sender OR admin in groups */}
+              {(mine || isAdmin) && (
+                <button
+                  className="block w-full text-left px-2 py-1 hover:bg-background-dark rounded text-red-500"
+                  onClick={deleteForEveryone}
+                >
+                  Delete for everyone
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Tail for bubble */}
+        <div className={`absolute bottom-0 w-3 h-3 ${mine
+          ? "right-0 translate-x-1/2 bg-primary-light"
+          : "left-0 -translate-x-1/2 bg-white border-l border-b border-background-dark/50"
+          }`} style={{
+            clipPath: mine ? 'polygon(0 0, 100% 100%, 0 100%)' : 'polygon(100% 0, 100% 100%, 0 100%)'
+          }} />
+
         {/* ✅ Show sender name for group chats (only for other users' messages) */}
         {isGroup && !mine && (
-          <div className="text-[10px] sm:text-xs text-blue-300 font-semibold mb-1">
+          <div className="text-[11px] sm:text-xs text-secondary-dark font-bold mb-1.5 flex items-center gap-1.5 pr-6">
+            <span className="w-5 h-5 rounded-full bg-gradient-to-br from-secondary to-secondary-dark text-white grid place-items-center text-[8px] font-bold uppercase">
+              {senderName?.[0] || "?"}
+            </span>
             {senderName}
           </div>
         )}
@@ -309,7 +325,6 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
             <button
               onClick={() => {
                 navigator.clipboard.writeText(message.body);
-                // Visual feedback
                 const btn = document.getElementById(`copy-btn-${message._id}`);
                 if (btn) {
                   btn.textContent = '✓ Copied';
@@ -317,24 +332,24 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
                 }
               }}
               id={`copy-btn-${message._id}`}
-              className="absolute top-2 right-2 text-[10px] sm:text-xs bg-slate-600 hover:bg-slate-500 px-2 py-1 rounded transition-colors"
+              className="absolute top-2 right-2 text-[10px] sm:text-xs bg-primary/90 hover:bg-primary text-white px-2.5 py-1 rounded-md transition-all font-medium"
             >
               Copy
             </button>
             {/* Code Block */}
-            <div className={`rounded-lg p-3 pt-8 overflow-x-auto text-xs sm:text-sm font-mono ${mine ? "bg-blue-800" : "bg-slate-900"
+            <div className={`rounded-xl p-3 pt-8 overflow-x-auto text-xs sm:text-sm font-mono ${mine ? "bg-primary-dark/50" : "bg-background-dark/70"
               }`}>
               <pre className="whitespace-pre-wrap break-words">{message.body}</pre>
             </div>
           </div>
         ) : (
-          <div className="whitespace-pre-wrap text-sm sm:text-base break-words">
+          <div className="whitespace-pre-wrap text-sm sm:text-base break-words leading-relaxed">
             {message.body}
           </div>
         )}
 
         {/* ✅ Ticks + Time */}
-        <div className={`text-[10px] text-right mt-1 flex gap-1 items-center justify-end ${mine ? "text-blue-200" : "text-slate-400"
+        <div className={`text-[10px] text-right mt-1.5 flex gap-1.5 items-center justify-end font-medium ${mine ? "text-white/60" : "text-primary/40"
           }`}>
           <span>{dayjs(message.createdAt).format("HH:mm")}</span>
           {renderTicks()}
