@@ -639,12 +639,17 @@ export default function ChatWindow({ chat, onBack }) {
     isInitialLoad.current = true;
   }, [chat.id]);
 
-  // ✅ Send message
-  const send = (text) => {
+  // ✅ Send message with attachments
+  const send = (text, attachments = []) => {
     socket.emit("message:send", {
       chatId: chat.id,
       senderId: user.id,
       body: text,
+      attachments: attachments.map(att => ({
+        url: att.url,
+        type: att.type,
+        name: att.name
+      }))
     });
   };
 

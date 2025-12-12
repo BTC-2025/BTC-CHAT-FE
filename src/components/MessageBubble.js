@@ -252,8 +252,8 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
         <div className="absolute top-1 right-1 z-50">
           <button
             className={`text-lg leading-none p-1 rounded transition-colors ${mine
-                ? "text-white/50 hover:text-white hover:bg-white/10"
-                : "text-primary/40 hover:text-primary hover:bg-black/5"
+              ? "text-white/50 hover:text-white hover:bg-white/10"
+              : "text-primary/40 hover:text-primary hover:bg-black/5"
               }`}
             onClick={() => setMenuOpen(!menuOpen)}
           >
@@ -318,6 +318,44 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
           </div>
         )}
 
+        {/* ✅ Attachments */}
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="space-y-2 mb-2">
+            {message.attachments.map((att, idx) => (
+              <div key={idx}>
+                {att.type === "image" ? (
+                  <a href={att.url} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={att.url}
+                      alt={att.name || "Image"}
+                      className="max-w-full max-h-60 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    />
+                  </a>
+                ) : att.type === "video" ? (
+                  <video
+                    src={att.url}
+                    controls
+                    className="max-w-full max-h-60 rounded-lg"
+                  />
+                ) : (
+                  <a
+                    href={att.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${mine ? "bg-white/10 hover:bg-white/20" : "bg-background-dark hover:bg-background-dark/80"
+                      }`}
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span className="text-sm truncate">{att.name || "Download file"}</span>
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ✅ Check if message has 5+ lines - show as code block */}
         {message.body && message.body.split('\n').length >= 5 ? (
           <div className="relative">
@@ -342,11 +380,11 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin }) {
               <pre className="whitespace-pre-wrap break-words">{message.body}</pre>
             </div>
           </div>
-        ) : (
+        ) : message.body ? (
           <div className="whitespace-pre-wrap text-sm sm:text-base break-words leading-relaxed">
             {message.body}
           </div>
-        )}
+        ) : null}
 
         {/* ✅ Ticks + Time */}
         <div className={`text-[10px] text-right mt-1.5 flex gap-1.5 items-center justify-end font-medium ${mine ? "text-white/60" : "text-primary/40"
