@@ -29,6 +29,15 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
     if (user?.token) load();
   }, [user]);
 
+  // ✅ Auto-refresh chat list every 5 seconds
+  useEffect(() => {
+    if (!user?.token) return;
+    const interval = setInterval(() => {
+      load();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [user?.token]);
+
   // ✅ Listen for new messages to update sidebar in real-time
   useEffect(() => {
     const onNewMessage = (msg) => {
