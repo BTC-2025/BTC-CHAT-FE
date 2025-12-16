@@ -29,18 +29,23 @@ export default function ChatListItem({ item, active, onClick, userId }) {
     <button
       onClick={onClick}
       className={`w-full text-left px-3 sm:px-4 py-3 transition-all duration-200 group relative ${active
-          ? "bg-gradient-to-r from-secondary/20 to-secondary/5 border-l-4 border-secondary shadow-sm"
-          : "hover:bg-white/60 border-l-4 border-transparent hover:shadow-sm"
+        ? "bg-gradient-to-r from-secondary/20 to-secondary/5 border-l-4 border-secondary shadow-sm"
+        : "hover:bg-white/60 border-l-4 border-transparent hover:shadow-sm"
         }`}
     >
       <div className="flex items-center gap-3">
         {/* Avatar with gradient and online indicator */}
         <div className="relative flex-shrink-0">
-          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full grid place-items-center text-sm font-bold uppercase shadow-md transition-transform group-hover:scale-105 ${item.isGroup
-              ? "bg-gradient-to-br from-secondary-dark to-secondary text-white"
-              : "bg-gradient-to-br from-primary to-primary-light text-white"
+          <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full grid place-items-center text-sm font-bold uppercase shadow-md transition-transform group-hover:scale-105 overflow-hidden ${item.isGroup
+            ? "bg-gradient-to-br from-secondary-dark to-secondary text-white"
+            : "bg-gradient-to-br from-primary to-primary-light text-white"
             }`}>
-            {avatarInitial}
+            {/* Show avatar image if available, otherwise show initial */}
+            {!item.isGroup && item.other?.avatar ? (
+              <img src={item.other.avatar} alt="" className="w-full h-full object-cover" />
+            ) : (
+              avatarInitial
+            )}
           </div>
           {/* Online indicator */}
           {isOnline && (
@@ -70,8 +75,8 @@ export default function ChatListItem({ item, active, onClick, userId }) {
               <button
                 onClick={handlePin}
                 className={`p-1.5 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 ${isPinned
-                    ? "text-secondary bg-secondary/10 hover:bg-secondary/20"
-                    : "text-primary/30 hover:text-primary/60 hover:bg-primary/5"
+                  ? "text-secondary bg-secondary/10 hover:bg-secondary/20"
+                  : "text-primary/30 hover:text-primary/60 hover:bg-primary/5"
                   }`}
                 title={isPinned ? "Unpin chat" : "Pin chat"}
               >
