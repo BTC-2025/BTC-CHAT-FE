@@ -498,14 +498,23 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       );
     };
 
+    // ✅ Handle reaction updates
+    const onReacted = ({ messageId, reactions }) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? { ...m, reactions } : m))
+      );
+    };
+
     socket.on("message:new", onNew);
     socket.on("message:pinned", onPinned);
     socket.on("message:unpinned", onUnpinned);
+    socket.on("message:reacted", onReacted);
 
     return () => {
       socket.off("message:new", onNew);
       socket.off("message:pinned", onPinned);
       socket.off("message:unpinned", onUnpinned);
+      socket.off("message:reacted", onReacted);
     };
   }, [chat.id, user.id]);
 

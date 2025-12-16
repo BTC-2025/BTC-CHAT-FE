@@ -187,9 +187,12 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import { socket } from "../socket";
 
+const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+
 export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply, onForward }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [showReactions, setShowReactions] = useState(false);
 
   // ✅ Determine if deleted
   const isDeletedForAll = message.deletedForEveryone;
@@ -201,6 +204,13 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
 
   // ✅ Get sender name for group chats
   const senderName = message.sender?.full_name || message.sender?.phone || "Unknown";
+
+  // ✅ Handle emoji reaction
+  const handleReaction = (emoji) => {
+    socket.emit("message:react", { messageId: message._id, emoji });
+    setShowReactions(false);
+    setMenuOpen(false);
+  };
 
   const renderTicks = () => {
     if (isDeleted) return null;
@@ -265,6 +275,19 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
             <div className={`absolute mt-1 bg-white rounded-lg shadow-xl 
                             p-2 text-xs min-w-[140px] border border-background-dark z-50 ${mine ? "right-0" : "left-0"
               }`}>
+
+              {/* Reaction picker */}
+              <div className="flex gap-1 pb-2 mb-2 border-b border-background-dark">
+                {REACTION_EMOJIS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReaction(emoji)}
+                    className="text-lg hover:scale-125 transition-transform p-0.5"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
 
               {/* Reply button */}
               <button
@@ -475,7 +498,30 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
           <span>{dayjs(message.createdAt).format("HH:mm")}</span>
           {renderTicks()}
         </div>
+
+        {/* ✅ Reactions display */}
+        {message.reactions && message.reactions.length > 0 && (
+          <div className={`flex flex-wrap gap-1 mt-1 ${mine ? "justify-end" : "justify-start"}`}>
+            {Object.entries(
+              message.reactions.reduce((acc, r) => {
+                acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([emoji, count]) => (
+              <button
+                key={emoji}
+                onClick={() => handleReaction(emoji)}
+                className={`text-xs px-1.5 py-0.5 rounded-full flex items-center gap-0.5 transition-colors ${mine ? "bg-white/20 hover:bg-white/30" : "bg-background-dark hover:bg-background-dark/70"
+                  }`}
+              >
+                <span>{emoji}</span>
+                <span className={mine ? "text-white/70" : "text-primary/60"}>{count}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

@@ -31,11 +31,28 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
     if (user?.token) load();
   }, [user]);
 
-  // ✅ Auto-refresh chat list every 5 seconds
+  // ✅ Auto-refresh chat list every 5 seconds (preserve local unread)
   useEffect(() => {
     if (!user?.token) return;
-    const interval = setInterval(() => {
-      load();
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await axios.get("https://btc-chat-be.onrender.com/api/chats", {
+          headers: { Authorization: `Bearer ${user?.token}` },
+        });
+        // Merge: keep higher local unread count (may have new messages from socket not yet synced)
+        setChats((prev) => {
+          const prevMap = new Map(prev.map(c => [c.id, c]));
+          return data.map(c => {
+            const local = prevMap.get(c.id);
+            return {
+              ...c,
+              unread: Math.max(c.unread || 0, local?.unread || 0)
+            };
+          });
+        });
+      } catch (err) {
+        console.error("Auto-refresh failed:", err);
+      }
     }, 5000);
     return () => clearInterval(interval);
   }, [user?.token]);

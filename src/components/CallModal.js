@@ -314,6 +314,7 @@ export default function CallModal({ callState, onClose, userId }) {
                                     autoPlay
                                     playsInline
                                     muted
+                                    style={{ transform: "scaleX(-1)" }}
                                     className={`w-full h-full object-cover ${isCameraOff ? "hidden" : ""}`}
                                 />
                                 {isCameraOff && (
