@@ -183,16 +183,41 @@
 // }
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { socket } from "../socket";
+import { useAuth } from "../context/AuthContext";
+import { decryptMessage } from "../utils/cryptoUtils";
 
 const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
 export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply, onForward }) {
+  const { privateKey } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [showReactions, setShowReactions] = useState(false);
+  const [decryptedBody, setDecryptedBody] = useState(null);
+  const [decryptionFailed, setDecryptionFailed] = useState(false);
+
+  // ✅ E2EE Decryption
+  useEffect(() => {
+    const decrypt = async () => {
+      if (message.encryptedBody && message.encryptedKey && privateKey) {
+        try {
+          const plainText = await decryptMessage(
+            message.encryptedBody,
+            message.encryptedKey,
+            privateKey
+          );
+          setDecryptedBody(plainText);
+        } catch (err) {
+          console.error("Decryption error:", err);
+          setDecryptionFailed(true);
+        }
+      }
+    };
+    decrypt();
+  }, [message.encryptedBody, message.encryptedKey, privateKey]);
 
   // ✅ Determine if deleted
   const isDeletedForAll = message.deletedForEveryone;
@@ -486,15 +511,19 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
               <pre className="whitespace-pre-wrap break-words">{message.body}</pre>
             </div>
           </div>
-        ) : message.body ? (
+        ) : message.body || decryptedBody ? (
           <div className="whitespace-pre-wrap text-sm sm:text-base break-words leading-relaxed">
-            {message.body}
+            {decryptedBody || message.body}
+            {decryptionFailed && <span className="text-red-400 block text-xs mt-1">(Decryption failed)</span>}
           </div>
         ) : null}
 
         {/* ✅ Ticks + Time */}
         <div className={`text-[10px] text-right mt-1.5 flex gap-1.5 items-center justify-end font-medium ${mine ? "text-white/60" : "text-primary/40"
           }`}>
+          {message.encryptedBody && (
+            <span title="End-to-end encrypted" className="opacity-70">🔒</span>
+          )}
           <span>{dayjs(message.createdAt).format("HH:mm")}</span>
           {renderTicks()}
         </div>

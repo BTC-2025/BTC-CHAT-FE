@@ -359,6 +359,7 @@ import MessageBubble from "./MessageBubble.js";
 import ChatInput from "./ChatInput.js";
 import GroupManageModal from "./GroupManageModal";
 import ForwardModal from "./ForwardModal";
+import { encryptMessage } from "../utils/cryptoUtils";
 
 export default function ChatWindow({ chat, onBack, onStartCall }) {
   const { user } = useAuth();
@@ -652,9 +653,9 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
     isInitialLoad.current = true;
   }, [chat.id]);
 
-  // ✅ Send message with attachments and replyTo
-  const send = (text, attachments = [], replyToId = null) => {
-    socket.emit("message:send", {
+  // ✅ Send message with attachments and replyTo (E2EE support)
+  const send = async (text, attachments = [], replyToId = null) => {
+    let payload = {
       chatId: chat.id,
       senderId: user.id,
       body: text,
@@ -664,7 +665,21 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
         name: att.name
       })),
       replyTo: replyToId
-    });
+    };
+
+    // ✅ Apply E2EE for 1:1 chats if other participant has a public key
+    if (!chat.isGroup && chat.other?.publicKey && text) {
+      try {
+        const encrypted = await encryptMessage(text, chat.other.publicKey);
+        payload.encryptedBody = encrypted.encryptedBody;
+        payload.encryptedKey = encrypted.encryptedKey;
+        payload.body = "[Encrypted Message]"; // Mask body for server
+      } catch (err) {
+        console.error("Encryption failed:", err);
+      }
+    }
+
+    socket.emit("message:send", payload);
   };
 
   // ✅ Block/Unblock handlers
