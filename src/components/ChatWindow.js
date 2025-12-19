@@ -670,10 +670,19 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
     // ✅ Apply E2EE for 1:1 chats if other participant has a public key
     if (!chat.isGroup && chat.other?.publicKey && text) {
       try {
-        const encrypted = await encryptMessage(text, chat.other.publicKey);
-        payload.encryptedBody = encrypted.encryptedBody;
-        payload.encryptedKey = encrypted.encryptedKey;
-        payload.body = "[Encrypted Message]"; // Mask body for server
+        // Encrypt for BOTH sender and recipient
+        const keysMap = {
+          [user.id]: user.publicKey,
+          [chat.other.id]: chat.other.publicKey
+        };
+
+        // Only proceed if we have keys for both (or at least the recipient)
+        if (user.publicKey && chat.other.publicKey) {
+          const encrypted = await encryptMessage(text, keysMap);
+          payload.encryptedBody = encrypted.encryptedBody;
+          payload.encryptedKeys = encrypted.encryptedKeys;
+          payload.body = "[Encrypted Message]"; // Mask body for server
+        }
       } catch (err) {
         console.error("Encryption failed:", err);
       }

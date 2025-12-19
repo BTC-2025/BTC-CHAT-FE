@@ -44,10 +44,8 @@ export async function importKey(b64, type) {
     );
 }
 
-// ✅ Encrypt message using hybrid RSA/AES-GCM
-export async function encryptMessage(text, recipientPublicKeyB64) {
-    const publicKey = await importKey(recipientPublicKeyB64, "public");
-
+// ✅ Encrypt message using hybrid RSA/AES-GCM for multiple recipients
+export async function encryptMessage(text, publicKeysMap) {
     // 1. Generate random AES-256 key
     const aesKey = await window.crypto.subtle.generateKey(
         { name: "AES-GCM", length: 256 },
@@ -64,12 +62,21 @@ export async function encryptMessage(text, recipientPublicKeyB64) {
         encodedBody
     );
 
-    // 3. Encrypt AES key with RSA Public Key
+    // 3. Encrypt AES key with each recipient's RSA Public Key
     const exportedAesKey = await window.crypto.subtle.exportKey("raw", aesKey);
-    const encryptedKeyBuffer = await window.crypto.subtle.encrypt(
-        { name: "RSA-OAEP" },
-        publicKey,
-        exportedAesKey
+    const encryptedKeys = await Promise.all(
+        Object.entries(publicKeysMap).map(async ([userId, pubKeyB64]) => {
+            const publicKey = await importKey(pubKeyB64, "public");
+            const encryptedKeyBuffer = await window.crypto.subtle.encrypt(
+                { name: "RSA-OAEP" },
+                publicKey,
+                exportedAesKey
+            );
+            return {
+                user: userId,
+                key: btoa(String.fromCharCode(...new Uint8Array(encryptedKeyBuffer)))
+            };
+        })
     );
 
     // Combine IV and Encrypted Body for convenience
@@ -79,7 +86,7 @@ export async function encryptMessage(text, recipientPublicKeyB64) {
 
     return {
         encryptedBody: btoa(String.fromCharCode(...combined)),
-        encryptedKey: btoa(String.fromCharCode(...new Uint8Array(encryptedKeyBuffer)))
+        encryptedKeys
     };
 }
 

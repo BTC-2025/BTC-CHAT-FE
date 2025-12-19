@@ -202,11 +202,18 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
   // ✅ E2EE Decryption
   useEffect(() => {
     const decrypt = async () => {
-      if (message.encryptedBody && message.encryptedKey && privateKey) {
+      // 1. Check for multi-recipient keys array first, then fallback to single key (legacy)
+      const myKeyObj = Array.isArray(message.encryptedKeys)
+        ? message.encryptedKeys.find(k => String(k.user) === String(message.currentUserId))
+        : null;
+
+      const encryptedKey = myKeyObj?.key || message.encryptedKey;
+
+      if (message.encryptedBody && encryptedKey && privateKey) {
         try {
           const plainText = await decryptMessage(
             message.encryptedBody,
-            message.encryptedKey,
+            encryptedKey,
             privateKey
           );
           setDecryptedBody(plainText);
@@ -217,7 +224,7 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
       }
     };
     decrypt();
-  }, [message.encryptedBody, message.encryptedKey, privateKey]);
+  }, [message.encryptedBody, message.encryptedKeys, message.encryptedKey, message.currentUserId, privateKey]);
 
   // ✅ Determine if deleted
   const isDeletedForAll = message.deletedForEveryone;
