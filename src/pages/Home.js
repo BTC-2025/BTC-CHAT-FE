@@ -1,6 +1,7 @@
 import Sidebar from "../components/Sidebar.js";
 import ChatWindow from "../components/ChatWindow.js";
 import CallModal from "../components/CallModal.js";
+import StatusPage from "./StatusPage.js";
 import { useState, useEffect } from "react";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext.js";
@@ -9,6 +10,7 @@ import logo from "../assets/logo.jpg";
 export default function Home() {
   const { user } = useAuth();
   const [activeChat, setActiveChat] = useState(null);
+  const [view, setView] = useState("chats"); // "chats" or "status"
   const [reloadKey, setReloadKey] = useState(0);
 
   // ✅ Call state
@@ -83,6 +85,10 @@ export default function Home() {
     });
   };
 
+  if (view === "status") {
+    return <StatusPage onBack={() => setView("chats")} />;
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-background">
       <div className="h-full w-full flex">
@@ -98,6 +104,7 @@ export default function Home() {
           <Sidebar
             onOpenChat={handleOpenChat}
             activeChatId={activeChat?.id}
+            onViewStatus={() => setView("status")}
           />
         </div>
 

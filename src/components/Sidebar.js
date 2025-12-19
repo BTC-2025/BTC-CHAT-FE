@@ -6,10 +6,9 @@ import { useAuth } from "../context/AuthContext.js";
 import { socket } from "../socket";
 import GroupCreateModal from "./GroupCreateModal";
 import ProfileModal from "./ProfileModal";
-import StatusSection from "./StatusSection";
 import logo from "../assets/logo.jpg";
 
-export default function Sidebar({ onOpenChat, activeChatId }) {
+export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
   const [openCreate, setOpenCreate] = useState(false);
@@ -164,22 +163,30 @@ export default function Sidebar({ onOpenChat, activeChatId }) {
           </div>
         </div>
 
-        <button
-          className="px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm rounded-xl font-semibold transition-all duration-200 flex items-center gap-1.5 ring-1 ring-white/20 hover:ring-white/40"
-          onClick={() => setOpenCreate(true)}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          <span>New Group</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            title="View Status"
+            className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-xl transition-all duration-200 ring-1 ring-white/20 hover:ring-white/40"
+            onClick={onViewStatus}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <button
+            className="px-3 sm:px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-xs sm:text-sm rounded-xl font-semibold transition-all duration-200 flex items-center gap-1.5 ring-1 ring-white/20 hover:ring-white/40"
+            onClick={() => setOpenCreate(true)}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>New Group</span>
+          </button>
+        </div>
       </div>
 
       {/* Profile Modal */}
       <ProfileModal open={openProfile} onClose={() => setOpenProfile(false)} />
-
-      {/* Status stories section */}
-      <StatusSection />
 
       {/* ✅ Search with improved styling */}
       <div className="p-3 sm:p-4 bg-white/50 backdrop-blur-sm sticky top-[62px] z-10 border-b border-background-dark/50">
