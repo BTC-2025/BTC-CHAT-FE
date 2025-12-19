@@ -7,6 +7,8 @@ export default function ProfileModal({ open, onClose }) {
     const [editing, setEditing] = useState(false);
     const [fullName, setFullName] = useState(user?.full_name || "");
     const [avatar, setAvatar] = useState(user?.avatar || "");
+    const [email, setEmail] = useState(user?.email || "");
+    const [about, setAbout] = useState(user?.about || "");
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
@@ -50,12 +52,12 @@ export default function ProfileModal({ open, onClose }) {
         try {
             await axios.put(
                 "https://btc-chat-be.onrender.com/api/users/profile",
-                { full_name: fullName, avatar },
+                { full_name: fullName, avatar, email, about },
                 { headers: { Authorization: `Bearer ${user?.token}` } }
             );
 
             // Update local storage
-            const updatedUser = { ...user, full_name: fullName, avatar };
+            const updatedUser = { ...user, full_name: fullName, avatar, email, about };
             localStorage.setItem("auth_user", JSON.stringify(updatedUser));
 
             // Reload to reflect changes
@@ -138,21 +140,58 @@ export default function ProfileModal({ open, onClose }) {
                         </div>
                     )}
 
-                    {/* Details */}
-                    <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-3 p-3 bg-background-dark/30 rounded-xl">
-                            <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                            </svg>
-                            <span className="text-primary">{user?.phone}</span>
+                    {/* Details in display mode */}
+                    {!editing && (
+                        <div className="space-y-2 text-sm">
+                            <div className="flex items-center gap-3 p-3 bg-background-dark/30 rounded-xl">
+                                <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <span className="text-primary">{user?.phone}</span>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-background-dark/30 rounded-xl">
+                                <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <span className="text-primary truncate">{email || "No email set"}</span>
+                            </div>
+                            <div className="p-3 bg-background-dark/30 rounded-xl space-y-1">
+                                <div className="flex items-center gap-2 text-secondary font-medium text-xs">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    About
+                                </div>
+                                <p className="text-primary text-sm leading-relaxed">{about || "Hey there! I am using BTC Chat."}</p>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-background-dark/30 rounded-xl">
-                            <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            <span className="text-primary">{fullName || "No name set"}</span>
+                    )}
+
+                    {/* Inputs in edit mode */}
+                    {editing && (
+                        <div className="space-y-3">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-primary/60 px-1">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full bg-background-dark/30 border border-transparent focus:border-secondary/50 rounded-xl px-4 py-2 text-sm outline-none transition-all text-primary placeholder:text-primary/30"
+                                    placeholder="yourname@gmail.com"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-primary/60 px-1">About</label>
+                                <textarea
+                                    value={about}
+                                    onChange={(e) => setAbout(e.target.value)}
+                                    rows={3}
+                                    className="w-full bg-background-dark/30 border border-transparent focus:border-secondary/50 rounded-xl px-4 py-2 text-sm outline-none transition-all text-primary placeholder:text-primary/30 resize-none"
+                                    placeholder="Write something about yourself..."
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-2">
@@ -163,6 +202,8 @@ export default function ProfileModal({ open, onClose }) {
                                         setEditing(false);
                                         setFullName(user?.full_name || "");
                                         setAvatar(user?.avatar || "");
+                                        setEmail(user?.email || "");
+                                        setAbout(user?.about || "");
                                     }}
                                     className="flex-1 py-2.5 rounded-xl border border-background-dark text-primary hover:bg-background-dark/30 transition-colors"
                                 >
