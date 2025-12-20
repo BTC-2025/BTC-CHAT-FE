@@ -2,13 +2,28 @@ import { useAuth } from "./context/AuthContext.js";
 import Login from "./pages/Login.js";
 import Register from "./pages/Register.js";
 import Home from "./pages/Home.js";
-import { useState } from "react";
+import DeleteAccount from "./pages/DeleteAccount.js"; // ✅ New Import
+import { useState, useEffect } from "react";
 import logo from "./assets/logo.png";
 
 export default function App() {
   const { user } = useAuth();
   const [mode, setMode] = useState("login");
+  const [path, setPath] = useState(window.location.pathname);
 
+  // Monitor path changes (for simple routing without react-router)
+  useEffect(() => {
+    const handleLocationChange = () => setPath(window.location.pathname);
+    window.addEventListener("popstate", handleLocationChange);
+    return () => window.removeEventListener("popstate", handleLocationChange);
+  }, []);
+
+  // ✅ 1. Check for dedicated Delete Account route
+  if (path === "/delete-account") {
+    return <DeleteAccount />;
+  }
+
+  // ✅ 2. Auth handling
   if (!user) {
     return (
       <div className="min-h-screen bg-background grid place-items-center p-4 sm:p-6">

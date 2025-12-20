@@ -4,7 +4,7 @@ import axios from "axios";
 import { API_BASE } from "../api";
 
 export default function ProfileModal({ open, onClose }) {
-    const { user } = useAuth();
+    const { user, logout } = useAuth(); // ✅ Added logout
     const [editing, setEditing] = useState(false);
     const [fullName, setFullName] = useState(user?.full_name || "");
     const [avatar, setAvatar] = useState(user?.avatar || "");
@@ -12,6 +12,7 @@ export default function ProfileModal({ open, onClose }) {
     const [about, setAbout] = useState(user?.about || "");
     const [uploading, setUploading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false); // ✅ Added deleting state
     const [error, setError] = useState("");
     const fileInputRef = useRef(null);
 
@@ -67,6 +68,28 @@ export default function ProfileModal({ open, onClose }) {
             console.error("Profile update failed:", err);
             setError("Failed to update profile.");
             setSaving(false);
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm(
+            "CRITICAL WARNING: This will permanently delete your account, all your messages, chats, and statuses. This action CANNOT be undone. Are you absolutely sure?"
+        );
+        if (!confirmed) return;
+
+        setDeleting(true);
+        setError("");
+        try {
+            await axios.delete(`${API_BASE}/users/me`, {
+                headers: { Authorization: `Bearer ${user?.token}` },
+            });
+            // Successfully deleted from backend, now clear local state
+            logout();
+            onClose();
+        } catch (err) {
+            console.error("Account deletion failed:", err);
+            setError("Failed to delete account. Please try again.");
+            setDeleting(false);
         }
     };
 
@@ -195,54 +218,91 @@ export default function ProfileModal({ open, onClose }) {
                     )}
 
                     {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                        {editing ? (
-                            <>
+                    <div className="flex flex-col gap-2 pt-2">
+                        <div className="flex gap-2">
+                            {editing ? (
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            setEditing(false);
+                                            setFullName(user?.full_name || "");
+                                            setAvatar(user?.avatar || "");
+                                            setEmail(user?.email || "");
+                                            setAbout(user?.about || "");
+                                        }}
+                                        className="flex-1 py-2.5 rounded-xl border border-background-dark text-primary hover:bg-background-dark/30 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={saving || uploading}
+                                        className="flex-1 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {saving ? (
+                                            <>
+                                                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                </svg>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            "Save"
+                                        )}
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={onClose}
+                                        className="flex-1 py-2.5 rounded-xl border border-background-dark text-primary hover:bg-background-dark/30 transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                    <button
+                                        onClick={() => setEditing(true)}
+                                        className="flex-1 py-2.5 rounded-xl bg-secondary text-white hover:bg-secondary-dark transition-colors"
+                                    >
+                                        Edit Profile
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* ✅ Delete Account Button */}
+                        {!editing && (
+                            <div className="flex flex-col items-center">
                                 <button
-                                    onClick={() => {
-                                        setEditing(false);
-                                        setFullName(user?.full_name || "");
-                                        setAvatar(user?.avatar || "");
-                                        setEmail(user?.email || "");
-                                        setAbout(user?.about || "");
-                                    }}
-                                    className="flex-1 py-2.5 rounded-xl border border-background-dark text-primary hover:bg-background-dark/30 transition-colors"
+                                    onClick={handleDeleteAccount}
+                                    disabled={deleting}
+                                    className="w-full py-2 text-xs font-bold text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100 flex items-center justify-center gap-2 mt-2"
                                 >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    disabled={saving || uploading}
-                                    className="flex-1 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-light transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {saving ? (
+                                    {deleting ? (
                                         <>
-                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                             </svg>
-                                            Saving...
+                                            Deleting Account...
                                         </>
                                     ) : (
-                                        "Save"
+                                        <>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            Permanently Delete Account
+                                        </>
                                     )}
                                 </button>
-                            </>
-                        ) : (
-                            <>
-                                <button
-                                    onClick={onClose}
-                                    className="flex-1 py-2.5 rounded-xl border border-background-dark text-primary hover:bg-background-dark/30 transition-colors"
+                                <a
+                                    href="/delete-account"
+                                    className="text-[10px] text-primary/40 hover:text-primary mt-1 transition-colors"
+                                    title="Dedicated link for Google/Apple compliance"
                                 >
-                                    Close
-                                </button>
-                                <button
-                                    onClick={() => setEditing(true)}
-                                    className="flex-1 py-2.5 rounded-xl bg-secondary text-white hover:bg-secondary-dark transition-colors"
-                                >
-                                    Edit Profile
-                                </button>
-                            </>
+                                    View dedicated deletion page
+                                </a>
+                            </div>
                         )}
                     </div>
                 </div>
