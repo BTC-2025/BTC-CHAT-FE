@@ -72,24 +72,17 @@ export default function AuthProvider({ children }) {
     return data;
   };
 
-  const sendOtp = async (email) => {
-    const { data } = await api.post("/auth/send-otp", { email });
-    return data;
-  };
-
-  const register = async (phone, full_name, password, email, otp, avatar = "") => {
+  const register = async (phone, full_name, password, avatar = "") => {
     // 1. Generate E2EE Keys
     const keyPair = await generateKeyPair();
     const pubKeyB64 = await exportKey(keyPair.publicKey);
 
-    // 2. Register with Public Key, Email, and OTP
+    // 2. Register with Public Key
     const { data } = await api.post("/auth/register", {
       phone,
       full_name,
       password,
       avatar,
-      email,
-      otp,
       publicKey: pubKeyB64
     });
 
@@ -114,7 +107,7 @@ export default function AuthProvider({ children }) {
   };
 
   return (
-    <AuthCtx.Provider value={{ user, privateKey, login, register, logout, sendOtp }}>
+    <AuthCtx.Provider value={{ user, privateKey, login, register, logout }}>
       {children}
     </AuthCtx.Provider>
   );
