@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext.js";
 import axios from "axios";
+import { API_BASE } from "../api";
 
 export default function Register() {
   const { register } = useAuth();
@@ -23,7 +24,7 @@ export default function Register() {
       formData.append("file", file);
 
       const response = await axios.post(
-        "https://btc-chat-be.onrender.com/api/upload",
+        `${API_BASE}/upload`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

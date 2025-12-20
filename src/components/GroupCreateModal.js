@@ -94,6 +94,7 @@
 
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE } from "../api";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext";
 
@@ -114,7 +115,7 @@ export default function GroupCreateModal({ open, onClose, onCreated }) {
     const fetchContacts = async () => {
       setLoadingContacts(true);
       try {
-        const { data } = await axios.get("https://btc-chat-be.onrender.com/api/chats", {
+        const { data } = await axios.get(`${API_BASE}/chats`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
 

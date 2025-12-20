@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { API_BASE } from "../api";
 
 export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
   const { user } = useAuth();
@@ -77,7 +78,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
         formData.append("file", file);
 
         const response = await axios.post(
-          "https://btc-chat-be.onrender.com/api/upload",
+          `${API_BASE}/upload`,
           formData,
           {
             headers: {
@@ -167,7 +168,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
       formData.append("file", audioBlob, `voice-${Date.now()}.webm`);
 
       const response = await axios.post(
-        "https://btc-chat-be.onrender.com/api/upload",
+        `${API_BASE}/upload`,
         formData,
         {
           headers: {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../api";
 
 export default function StatusModal({ group, onClose, onDelete }) {
     const { user } = useAuth();
@@ -46,8 +47,8 @@ export default function StatusModal({ group, onClose, onDelete }) {
     const handleDelete = async () => {
         if (!window.confirm("Delete this status?")) return;
         try {
-            await axios.delete(`https://btc-chat-be.onrender.com/api/status/${currentStatus._id}`, {
-                headers: { Authorization: `Bearer ${user?.token}` }
+            await axios.delete(`${API_BASE} /status/${currentStatus._id} `, {
+                headers: { Authorization: `Bearer ${user?.token} ` }
             });
             if (group.statuses.length === 1) {
                 onClose();
@@ -70,7 +71,7 @@ export default function StatusModal({ group, onClose, onDelete }) {
                         <div
                             className="h-full bg-white transition-all duration-75 linear"
                             style={{
-                                width: idx < currentIndex ? "100%" : idx === currentIndex ? `${progress}%` : "0%"
+                                width: idx < currentIndex ? "100%" : idx === currentIndex ? `${progress}% ` : "0%"
                             }}
                         />
                     </div>

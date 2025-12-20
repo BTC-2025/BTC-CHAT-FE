@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
-export const socket = io("https://btc-chat-be.onrender.com", {
+import { BASE_URL } from "./api";
+export const socket = io(BASE_URL, {
   autoConnect: false,
   auth: (cb) => {
     // set userId at connect time

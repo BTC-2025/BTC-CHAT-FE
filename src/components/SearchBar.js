@@ -1,6 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../api";
 
 export default function SearchBar({ onOpen }) {
   const { user } = useAuth();
@@ -15,8 +16,8 @@ export default function SearchBar({ onOpen }) {
     if (!phone.trim()) return;
 
     try {
-      const { data } = await axios.get(
-        `https://btc-chat-be.onrender.com/api/users/search/${phone}`,
+      const { data: userFound } = await axios.get(
+        `${API_BASE}/users/search/${phone}`,
         {
           headers: {
             Authorization: `Bearer ${user?.token}`,
@@ -24,7 +25,7 @@ export default function SearchBar({ onOpen }) {
         }
       );
 
-      setResult(data);
+      setResult(userFound);
     } catch (err) {
       setError("No user found");
     }
@@ -32,17 +33,13 @@ export default function SearchBar({ onOpen }) {
 
   const openChat = async () => {
     try {
-      const { data } = await axios.post(
-        "https://btc-chat-be.onrender.com/api/chats/open",
+      const { data: chat } = await axios.post(
+        `${API_BASE}/chats/open`,
         { targetPhone: result.phone },
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${user?.token}` } }
       );
 
-      onOpen(data);
+      onOpen(chat);
       setPhone("");
       setResult(null);
 

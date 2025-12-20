@@ -1,6 +1,7 @@
 // client/src/components/GroupManageModal.js
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE } from "../api";
 import { useAuth } from "../context/AuthContext";
 
 export default function GroupManageModal({ chatId, open, onClose }) {
@@ -16,8 +17,8 @@ export default function GroupManageModal({ chatId, open, onClose }) {
     setError(null);
     try {
       const { data } = await axios.get(
-        `https://btc-chat-be.onrender.com/api/groups/${chatId}`,
-        { headers: { Authorization: `Bearer ${user?.token}` } }
+        `${API_BASE} /groups/${chatId} `,
+        { headers: { Authorization: `Bearer ${user?.token} ` } }
       );
 
       setGroup(data);
@@ -72,7 +73,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const addMember = async () => {
     try {
       await axios.post(
-        `https://btc-chat-be.onrender.com/api/groups/${chatId}/members`,
+        `${API_BASE} /groups/${chatId}/members`,
         { phone },
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
@@ -86,7 +87,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const removeMember = async (phone) => {
     try {
       await axios.delete(
-        `https://btc-chat-be.onrender.com/api/groups/${chatId}/members`,
+        `${API_BASE}/groups/${chatId}/members`,
         {
           data: { phone },
           headers: { Authorization: `Bearer ${user?.token}` },
@@ -101,7 +102,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const toggleAdmin = async (phone, promote) => {
     try {
       await axios.post(
-        `https://btc-chat-be.onrender.com/api/groups/${chatId}/admins`,
+        `${API_BASE}/groups/${chatId}/admins`,
         { phone, promote },
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
@@ -114,7 +115,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const saveMeta = async () => {
     try {
       await axios.patch(
-        `https://btc-chat-be.onrender.com/api/groups/${chatId}`,
+        `${API_BASE}/groups/${chatId}`,
         meta,
         {
           headers: { Authorization: `Bearer ${user?.token}` },

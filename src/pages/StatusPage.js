@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../api"; // ✅ Import dynamic base URL
 
 export default function StatusPage({ onBack }) {
     const { user } = useAuth();
@@ -15,7 +16,7 @@ export default function StatusPage({ onBack }) {
 
     const fetchStatuses = async () => {
         try {
-            const { data } = await axios.get("https://btc-chat-be.onrender.com/api/status", {
+            const { data } = await axios.get(`${API_BASE}/status`, {
                 headers: { Authorization: `Bearer ${user?.token}` }
             });
             setStatusGroups(data);
@@ -62,7 +63,7 @@ export default function StatusPage({ onBack }) {
     // Track views
     useEffect(() => {
         if (currentStatus && !isMine && !currentStatus.viewedBy?.includes(user?.id)) {
-            axios.post(`https://btc-chat-be.onrender.com/api/status/view/${currentStatus._id}`, {}, {
+            axios.post(`${API_BASE}/status/view/${currentStatus._id}`, {}, {
                 headers: { Authorization: `Bearer ${user?.token}` }
             }).catch(e => console.error("View track failed", e));
         }
@@ -99,10 +100,10 @@ export default function StatusPage({ onBack }) {
         try {
             const formData = new FormData();
             formData.append("file", file);
-            const uploadRes = await axios.post("https://btc-chat-be.onrender.com/api/upload", formData, {
+            const uploadRes = await axios.post(`${API_BASE}/upload`, formData, {
                 headers: { Authorization: `Bearer ${user?.token}`, "Content-Type": "multipart/form-data" }
             });
-            await axios.post("https://btc-chat-be.onrender.com/api/status",
+            await axios.post(`${API_BASE}/status`,
                 { content: uploadRes.data.url, type: "image" },
                 { headers: { Authorization: `Bearer ${user?.token}` } }
             );
@@ -118,7 +119,7 @@ export default function StatusPage({ onBack }) {
     const handleDeleteStatus = async () => {
         if (!window.confirm("Delete this status?")) return;
         try {
-            await axios.delete(`https://btc-chat-be.onrender.com/api/status/${currentStatus._id}`, {
+            await axios.delete(`${API_BASE}/status/${currentStatus._id}`, {
                 headers: { Authorization: `Bearer ${user?.token}` }
             });
             await fetchStatuses();

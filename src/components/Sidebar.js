@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../api";
 import SearchBar from "./SearchBar.js";
 import ChatList from "./ChatList.js";
 import { useAuth } from "../context/AuthContext.js";
@@ -16,19 +17,40 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
   const load = async () => {
     try {
-      const { data } = await axios.get("https://btc-chat-be.onrender.com/api/chats", {
+      const { data } = await axios.get(`${API_BASE}/chats`, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
       });
       setChats(data);
     } catch (err) {
-      console.error("Failed to load chats:", err);
+      console.error("Failed to fetch chats:", err);
     }
   };
 
   useEffect(() => {
-    if (user?.token) load();
+    const fetchChatsOnce = async () => {
+      if (!user?.token) return;
+      try {
+        const { data } = await axios.get(`${API_BASE}/chats`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        // Merge: keep higher local unread count (may have new messages from socket not yet synced)
+        setChats((prev) => {
+          const prevMap = new Map(prev.map(c => [c.id, c]));
+          return data.map(c => {
+            const local = prevMap.get(c.id);
+            return {
+              ...c,
+              unread: Math.max(c.unread || 0, local?.unread || 0)
+            };
+          });
+        });
+      } catch (err) {
+        console.error("Failed to fetch chats:", err);
+      }
+    };
+    fetchChatsOnce();
   }, [user]);
 
   // ✅ Auto-refresh chat list every 5 seconds (preserve local unread)
@@ -36,7 +58,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
     if (!user?.token) return;
     const interval = setInterval(async () => {
       try {
-        const { data } = await axios.get("https://btc-chat-be.onrender.com/api/chats", {
+        const { data } = await axios.get(`${API_BASE}/chats`, {
           headers: { Authorization: `Bearer ${user?.token}` },
         });
         // Merge: keep higher local unread count (may have new messages from socket not yet synced)

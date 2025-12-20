@@ -1,7 +1,11 @@
 import axios from "axios";
 
-// ✅ Production backend URL
-const API_BASE = "https://btc-chat-be.onrender.com/api";
+// ✅ Dynamic backend URL based on environment
+export const BASE_URL = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://btc-chat-be.onrender.com";
+
+export const API_BASE = `${BASE_URL}/api`;
 
 export const api = axios.create({
   baseURL: API_BASE,

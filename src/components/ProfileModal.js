@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import { API_BASE } from "../api";
 
 export default function ProfileModal({ open, onClose }) {
     const { user } = useAuth();
@@ -27,7 +28,7 @@ export default function ProfileModal({ open, onClose }) {
             formData.append("file", file);
 
             const response = await axios.post(
-                "https://btc-chat-be.onrender.com/api/upload",
+                `${API_BASE}/upload`,
                 formData,
                 {
                     headers: {
@@ -51,7 +52,7 @@ export default function ProfileModal({ open, onClose }) {
         setError("");
         try {
             await axios.put(
-                "https://btc-chat-be.onrender.com/api/users/profile",
+                `${API_BASE}/users/profile`,
                 { full_name: fullName, avatar, email, about },
                 { headers: { Authorization: `Bearer ${user?.token}` } }
             );

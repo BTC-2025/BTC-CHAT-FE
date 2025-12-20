@@ -353,6 +353,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../api";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext.js";
 import MessageBubble from "./MessageBubble.js";
@@ -383,7 +384,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
   const load = async () => {
     try {
       const { data } = await axios.get(
-        `https://btc-chat-be.onrender.com/api/messages/${chat.id}`,
+        `${API_BASE}/messages/${chat.id}`,
         {
           headers: { Authorization: `Bearer ${user?.token}` },
         }

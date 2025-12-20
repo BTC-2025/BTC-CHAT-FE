@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { API_BASE } from "../api";
 import StatusModal from "./StatusModal";
 
 export default function StatusSection() {
@@ -12,7 +13,7 @@ export default function StatusSection() {
 
     const fetchStatuses = async () => {
         try {
-            const { data } = await axios.get("https://btc-chat-be.onrender.com/api/status", {
+            const { data } = await axios.get(`${API_BASE}/status`, {
                 headers: { Authorization: `Bearer ${user?.token}` }
             });
             setStatusGroups(data);
@@ -35,7 +36,7 @@ export default function StatusSection() {
             const formData = new FormData();
             formData.append("file", file);
             const uploadRes = await axios.post(
-                "https://btc-chat-be.onrender.com/api/upload",
+                `${API_BASE}/upload`,
                 formData,
                 {
                     headers: {
@@ -47,7 +48,7 @@ export default function StatusSection() {
 
             // 2. Create status
             await axios.post(
-                "https://btc-chat-be.onrender.com/api/status",
+                `${API_BASE}/status`,
                 { content: uploadRes.data.url, type: "image" },
                 { headers: { Authorization: `Bearer ${user?.token}` } }
             );
