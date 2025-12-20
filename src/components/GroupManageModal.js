@@ -4,8 +4,9 @@ import axios from "axios";
 import { API_BASE } from "../api";
 import { useAuth } from "../context/AuthContext";
 
-export default function GroupManageModal({ chatId, open, onClose }) {
+export default function GroupManageModal({ chat, open, onClose }) {
   const { user } = useAuth();
+  const chatId = chat?.id; // ✅ Derived from chat prop
   const [group, setGroup] = useState(null);
   const [phone, setPhone] = useState("");
   const [meta, setMeta] = useState({ title: "", description: "" });
@@ -17,8 +18,8 @@ export default function GroupManageModal({ chatId, open, onClose }) {
     setError(null);
     try {
       const { data } = await axios.get(
-        `${API_BASE} /groups/${chatId} `,
-        { headers: { Authorization: `Bearer ${user?.token} ` } }
+        `${API_BASE}/groups/${chatId}`,
+        { headers: { Authorization: `Bearer ${user?.token}` } }
       );
 
       setGroup(data);
@@ -73,7 +74,7 @@ export default function GroupManageModal({ chatId, open, onClose }) {
   const addMember = async () => {
     try {
       await axios.post(
-        `${API_BASE} /groups/${chatId}/members`,
+        `${API_BASE}/groups/${chatId}/members`,
         { phone },
         { headers: { Authorization: `Bearer ${user?.token}` } }
       );
