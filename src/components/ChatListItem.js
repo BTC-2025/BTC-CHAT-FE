@@ -1,11 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { socket } from "../socket";
+import { useAuth } from "../context/AuthContext";
+import { decryptMessage } from "../utils/cryptoUtils";
 dayjs.extend(relativeTime);
 
 export default function ChatListItem({ item, active, onClick, userId }) {
+  const { privateKey } = useAuth();
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [decryptedLast, setDecryptedLast] = useState(null);
+
+  // ✅ Decrypt last message for sidebar
+  useEffect(() => {
+    const decrypt = async () => {
+      if (!item.lastEncryptedBody || !privateKey) return;
+
+      try {
+        const myKeyObj = (item.lastEncryptedKeys || []).find(
+          k => String(k.user) === String(userId)
+        );
+        const encryptedKey = myKeyObj?.key;
+
+        if (encryptedKey) {
+          const plainText = await decryptMessage(
+            item.lastEncryptedBody,
+            encryptedKey,
+            privateKey
+          );
+          setDecryptedLast(plainText);
+        }
+      } catch (err) {
+        console.error("Sidebar decryption failed:", err);
+      }
+    };
+    decrypt();
+  }, [item.lastEncryptedBody, item.lastEncryptedKeys, userId, privateKey]);
 
   const displayName = item.isGroup
     ? item.title
@@ -105,7 +135,7 @@ export default function ChatListItem({ item, active, onClick, userId }) {
               {/* Last message preview */}
               <div className={`text-xs sm:text-sm truncate transition-colors ${item.unread > 0 ? "text-primary/80 font-medium" : "text-primary/50"
                 }`}>
-                {item.lastMessage || "No messages yet"}
+                {decryptedLast || item.lastMessage || "No messages yet"}
               </div>
 
               {/* Unread badge with animation */}

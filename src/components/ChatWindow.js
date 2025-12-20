@@ -522,36 +522,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
     };
   }, [chat.id, user.id]);
 
-  // ✅ Auto-refresh every 5 seconds (preserving scroll position)
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      const scroller = scrollerRef.current;
-      if (!scroller) return;
-
-      // Save current scroll position
-      const scrollTop = scroller.scrollTop;
-      const scrollHeight = scroller.scrollHeight;
-      const isNearBottom = scrollHeight - scrollTop - scroller.clientHeight < 100;
-
-      // Fetch new messages
-      await load();
-
-      // After state update, restore scroll position
-      requestAnimationFrame(() => {
-        if (isNearBottom) {
-          // If was near bottom, scroll to new bottom
-          scroller.scrollTop = scroller.scrollHeight;
-        } else {
-          // Otherwise, maintain the same scroll position
-          const newScrollHeight = scroller.scrollHeight;
-          const heightDiff = newScrollHeight - scrollHeight;
-          scroller.scrollTop = scrollTop + heightDiff;
-        }
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [chat.id]);
+  // ✅ AUTO-REFRESH REMOVED for performance. Sockets handle updates.
 
   // ✅ Mark all as read
   useEffect(() => {

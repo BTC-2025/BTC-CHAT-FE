@@ -53,31 +53,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
     fetchChatsOnce();
   }, [user]);
 
-  // ✅ Auto-refresh chat list every 5 seconds (preserve local unread)
-  useEffect(() => {
-    if (!user?.token) return;
-    const interval = setInterval(async () => {
-      try {
-        const { data } = await axios.get(`${API_BASE}/chats`, {
-          headers: { Authorization: `Bearer ${user?.token}` },
-        });
-        // Merge: keep higher local unread count (may have new messages from socket not yet synced)
-        setChats((prev) => {
-          const prevMap = new Map(prev.map(c => [c.id, c]));
-          return data.map(c => {
-            const local = prevMap.get(c.id);
-            return {
-              ...c,
-              unread: Math.max(c.unread || 0, local?.unread || 0)
-            };
-          });
-        });
-      } catch (err) {
-        console.error("Auto-refresh failed:", err);
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [user?.token]);
+  // ✅ AUTO-REFRESH REMOVED for performance. Sockets handle updates.
 
   // ✅ Listen for new messages to update sidebar in real-time
   useEffect(() => {
@@ -87,9 +63,11 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
           if (c.id === msg.chat) {
             return {
               ...c,
-              lastMessage: msg.body || "[attachment]",
+              lastMessage: msg.body || (msg.attachments?.length ? "[attachment]" : ""),
               lastAt: msg.createdAt,
-              unread: (msg.sender !== user?.id && msg.sender?._id !== user?.id)
+              lastEncryptedBody: msg.encryptedBody || null, // ✅ Real-time update
+              lastEncryptedKeys: msg.encryptedKeys || [],   // ✅ Real-time update
+              unread: (String(msg.sender) !== String(user?.id) && String(msg.sender?._id) !== String(user?.id))
                 ? (c.unread || 0) + 1
                 : c.unread
             };
