@@ -3,7 +3,7 @@ import axios from "axios";
 // ✅ Dynamic backend URL based on environment
 export const BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:5000"
-  : "https://btc-chat-be.onrender.com";
+  : "https://api.bluechat.in";
 
 export const API_BASE = `${BASE_URL}/api`;
 
