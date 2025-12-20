@@ -12,6 +12,9 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [scheduledAt, setScheduledAt] = useState(null); // ✅ New State
+  const [showPicker, setShowPicker] = useState(false); // ✅ New State
+
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -23,11 +26,14 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
     const text = val.trim();
     if (!text && attachments.length === 0) return;
 
-    // Send message with attachments and replyTo
-    onSend(text, attachments, replyTo?._id);
+    // Send message with attachments, replyTo, and scheduledAt
+    onSend(text, attachments, replyTo?._id, scheduledAt);
+
     setVal("");
     setAttachments([]);
-    onCancelReply?.(); // Clear reply after sending
+    setScheduledAt(null);
+    setShowPicker(false);
+    onCancelReply?.();
 
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -219,6 +225,26 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
         </div>
       )}
 
+      {/* Scheduled Time Indicator */}
+      {scheduledAt && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl animate-fade-in">
+          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-xs font-bold text-blue-600">
+            Scheduled: {new Date(scheduledAt).toLocaleString()}
+          </span>
+          <button
+            onClick={() => setScheduledAt(null)}
+            className="ml-auto p-1 hover:bg-blue-500/20 rounded-lg text-blue-500 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
+
       {/* Attachment Preview */}
       {attachments.length > 0 && (
         <div className="flex gap-2 flex-wrap p-2 bg-white/50 rounded-xl border border-background-dark/30">
@@ -257,6 +283,32 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Datetime Picker Modal */}
+      {showPicker && (
+        <div className="p-4 bg-white rounded-2xl shadow-2xl border border-background-dark/30 animate-premium-in">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-black text-primary uppercase tracking-wider">Schedule Release</h4>
+            <button onClick={() => setShowPicker(false)} className="text-primary/40 hover:text-primary transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              type="datetime-local"
+              className="flex-1 p-3 bg-background border border-background-dark/50 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 text-sm font-bold text-primary"
+              min={new Date().toISOString().slice(0, 16)}
+              onChange={(e) => setScheduledAt(e.target.value)}
+            />
+            <button
+              onClick={() => setShowPicker(false)}
+              className="px-4 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all"
+            >
+              Set
+            </button>
+          </div>
         </div>
       )}
 
@@ -327,6 +379,19 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
             )}
           </button>
 
+          {/* Schedule Button */}
+          {!val.trim() && attachments.length === 0 && (
+            <button
+              onClick={() => setShowPicker(!showPicker)}
+              className={`p-3 border rounded-2xl transition-all duration-200 ${showPicker || scheduledAt ? 'bg-blue-500/10 border-blue-500/50 text-blue-500' : 'bg-white/80 border-background-dark/50 text-primary hover:bg-background-dark'}`}
+              title="Schedule message"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+          )}
+
           <input
             ref={fileInputRef}
             type="file"
@@ -363,11 +428,15 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
             <button
               onClick={submit}
               disabled={(!val.trim() && attachments.length === 0) || uploading}
-              className="px-4 sm:px-5 py-3 bg-gradient-to-r from-primary to-primary-light rounded-2xl hover:from-primary-light hover:to-primary transition-all duration-200 font-semibold text-sm sm:text-base text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className={`px-4 sm:px-5 py-3 bg-gradient-to-r ${scheduledAt ? 'from-blue-600 to-blue-400' : 'from-primary to-primary-light'} rounded-2xl hover:brightness-110 transition-all duration-200 font-semibold text-sm sm:text-base text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2`}
             >
-              <span className="hidden sm:inline">Send</span>
+              <span className="hidden sm:inline">{scheduledAt ? 'Schedule' : 'Send'}</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                {scheduledAt ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                )}
               </svg>
             </button>
           )}

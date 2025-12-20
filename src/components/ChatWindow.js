@@ -627,8 +627,8 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
     isInitialLoad.current = true;
   }, [chat.id]);
 
-  // ✅ Send message with attachments and replyTo (E2EE support)
-  const send = async (text, attachments = [], replyToId = null) => {
+  // ✅ Send message with attachments, replyTo, and scheduledAt (E2EE support)
+  const send = async (text, attachments = [], replyToId = null, scheduledAt = null) => {
     let payload = {
       chatId: chat.id,
       senderId: user.id,
@@ -638,24 +638,23 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
         type: att.type,
         name: att.name
       })),
-      replyTo: replyToId
+      replyTo: replyToId,
+      scheduledAt: scheduledAt // ✅ Add scheduling
     };
 
     // ✅ Apply E2EE for 1:1 chats if other participant has a public key
     if (!chat.isGroup && chat.other?.publicKey && text) {
       try {
-        // Encrypt for BOTH sender and recipient
         const keysMap = {
           [user.id]: user.publicKey,
           [chat.other.id]: chat.other.publicKey
         };
 
-        // Only proceed if we have keys for both (or at least the recipient)
         if (user.publicKey && chat.other.publicKey) {
           const encrypted = await encryptMessage(text, keysMap);
           payload.encryptedBody = encrypted.encryptedBody;
           payload.encryptedKeys = encrypted.encryptedKeys;
-          payload.body = "[Encrypted Message]"; // Mask body for server
+          payload.body = "[Encrypted Message]";
         }
       } catch (err) {
         console.error("Encryption failed:", err);
@@ -664,6 +663,18 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
 
     socket.emit("message:send", payload);
   };
+
+  // ✅ New event listener for scheduling confirmation
+  useEffect(() => {
+    const onScheduled = ({ message, scheduledAt }) => {
+      // Show some UI feedback? For now, we'll just log or could show a toast
+      console.log(`Message scheduled for ${new Date(scheduledAt).toLocaleString()}`);
+      // alert(`Message scheduled for ${new Date(scheduledAt).toLocaleString()}`);
+    };
+
+    socket.on("message:scheduled", onScheduled);
+    return () => socket.off("message:scheduled", onScheduled);
+  }, []);
 
   // ✅ Block/Unblock handlers
   const handleBlock = () => {
