@@ -195,7 +195,6 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
   const { privateKey } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
-  const [showReactions, setShowReactions] = useState(false);
   const [decryptedBody, setDecryptedBody] = useState(null);
   const [decryptionFailed, setDecryptionFailed] = useState(false);
 
@@ -240,7 +239,6 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
   // ✅ Handle emoji reaction
   const handleReaction = (emoji) => {
     socket.emit("message:react", { messageId: message._id, emoji });
-    setShowReactions(false);
     setMenuOpen(false);
   };
 

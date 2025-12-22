@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import SearchBar from "./SearchBar.js";
@@ -16,7 +16,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
   const [openProfile, setOpenProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("chats"); // chats, groups, calls, status, settings
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_BASE}/chats`, {
         headers: {
@@ -27,7 +27,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
     } catch (err) {
       console.error("Failed to fetch chats:", err);
     }
-  };
+  }, [user?.token]);
 
   useEffect(() => {
     const fetchChatsOnce = async () => {
@@ -120,13 +120,17 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
       });
     };
 
+    const handleRefresh = () => load();
+    window.addEventListener("chats:refresh", handleRefresh);
+
     socket.on("chat:pinned", onChatPinned);
     socket.on("chat:unpinned", onChatUnpinned);
     return () => {
       socket.off("chat:pinned", onChatPinned);
       socket.off("chat:unpinned", onChatUnpinned);
+      window.removeEventListener("chats:refresh", handleRefresh);
     };
-  }, [user?.id]);
+  }, [user?.id, load]);
 
   const sortChats = (chatList, userId) => {
     return [...chatList].sort((a, b) => {
@@ -139,8 +143,9 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
   };
 
   const filteredChats = chats.filter(c => {
-    if (activeTab === "groups") return c.isGroup;
-    if (activeTab === "chats") return !c.isGroup;
+    if (activeTab === "groups") return c.isGroup && !c.isArchived;
+    if (activeTab === "chats") return !c.isGroup && !c.isArchived;
+    if (activeTab === "archived") return c.isArchived;
     return true; // fallback for others
   });
 
@@ -186,15 +191,21 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
     // Filter online users (only for 1:1 chats)
     const onlineUsers = chats
-      .filter(c => !c.isGroup && c.other?.isOnline)
+      .filter(c => !c.isGroup && c.other?.isOnline && !c.isArchived)
       .map(c => c.other);
+
+    const getTitle = () => {
+      if (activeTab === 'groups') return 'Groups';
+      if (activeTab === 'archived') return 'Archived';
+      return 'Chats';
+    };
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header Area */}
         <div className="px-5 pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-black">{activeTab === 'groups' ? 'Groups' : 'Chats'}</h2>
+            <h2 className="text-2xl font-black">{getTitle()}</h2>
             {activeTab === 'groups' && (
               <button onClick={() => setOpenCreate(true)} className="w-8 h-8 flex items-center justify-center bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
@@ -206,8 +217,8 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
         {/* Online Section (Horizontal Scroll) */}
         {activeTab === "chats" && onlineUsers.length > 0 && (
-          <div className="px-5 py-4">
-            <div className="text-[11px] font-bold text-primary tracking-widest uppercase mb-3 opacity-60">Online</div>
+          <div className="px-5 py-2">
+            <div className="text-[11px] font-bold text-light tracking-widest uppercase mb-2">Online</div>
             <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar no-scrollbar">
               {onlineUsers.map((u) => (
                 <button
@@ -233,14 +244,14 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
         {/* List Container */}
         <div className="flex-1 overflow-y-auto custom-scrollbar pt-2">
-          {activeTab === "chats" && (
-            <div className="px-5 mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-white/30 tracking-tight">
-                Sort by <span className="text-primary">Newest</span>
+          {/* {activeTab === "chats" && (
+            <div className="px-3 mb-2 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-white tracking-tight">
+                Sort by <span className="text-pri">Newest</span>
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
               </div>
             </div>
-          )}
+          )} */}
           <ChatList
             items={sortChats(filteredChats, user?.id)}
             activeId={activeChatId}

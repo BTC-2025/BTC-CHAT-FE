@@ -351,7 +351,7 @@
 
 
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import { socket } from "../socket";
@@ -383,7 +383,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
   const [blockError, setBlockError] = useState("");
 
   // ✅ Load messages (backend masks deleted messages)
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const { data } = await axios.get(
         `${API_BASE}/messages/${chat.id}`,
@@ -402,7 +402,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
     } catch (err) {
       console.error("Failed to load messages:", err);
     }
-  };
+  }, [chat.id, user?.token, user.id]);
 
   const [typing, setTyping] = useState(false);
   const [presence, setPresence] = useState({
@@ -525,7 +525,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       socket.off("message:unpinned", onUnpinned);
       socket.off("message:reacted", onReacted);
     };
-  }, [chat.id, user.id]);
+  }, [chat.id, user.id, load]);
 
   // ✅ AUTO-REFRESH REMOVED for performance. Sockets handle updates.
 
@@ -600,7 +600,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       socket.off("typing:stopped", onTypingStop);
       socket.off("presence:update", onPresence);
     };
-  }, [chat.id]);
+  }, [chat.id, chat.other]);
 
   // ✅ Scroll to bottom on initial load, smart scroll for updates
   const isInitialLoad = useRef(true);
