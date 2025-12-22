@@ -369,6 +369,8 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
   const scrollerRef = useRef(null);
   const [openManage, setOpenManage] = useState(false);
   const [openContactInfo, setOpenContactInfo] = useState(false); // ✅ Added state
+  const [showMenu, setShowMenu] = useState(false);
+  // ✅ Added state
 
   // ✅ Reply/Forward state
   const [replyTo, setReplyTo] = useState(null);
@@ -383,6 +385,49 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
   const [blockError, setBlockError] = useState("");
 
   // ✅ Load messages (backend masks deleted messages)
+  // ✅ Archive / Hide handlers
+  const handleArchive = async () => {
+    setShowMenu(false);
+    try {
+      await axios.post(`${API_BASE}/chats/${chat.id}/archive`, {
+        archive: !chat.isArchived
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      window.dispatchEvent(new CustomEvent("chats:refresh"));
+    } catch (err) {
+      console.error("Archive failed:", err);
+    }
+  };
+
+  const handleHide = async () => {
+    setShowMenu(false);
+    if (!window.confirm("Delete this chat? Message history will be cleared for you. The contact will see you as a new chat if you message again.")) return;
+    try {
+      await axios.post(`${API_BASE}/chats/${chat.id}/hide`, {}, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      window.dispatchEvent(new CustomEvent("chats:refresh"));
+      if (onBack) onBack(); // Close chat window after hiding
+    } catch (err) {
+      console.error("Hide failed:", err);
+    }
+  };
+
+  const handleClearChat = async () => {
+    setShowMenu(false);
+    if (!window.confirm("Clear all messages? This action cannot be undone for you.")) return;
+    try {
+      await axios.post(`${API_BASE}/chats/${chat.id}/clear`, {}, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      setMessages([]); // Clear local state
+      window.dispatchEvent(new CustomEvent("chats:refresh")); // Refresh sidebar to clear last message
+    } catch (err) {
+      console.error("Clear chat failed:", err);
+    }
+  };
+
   const load = useCallback(async () => {
     try {
       const { data } = await axios.get(
@@ -814,6 +859,54 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
               {blockStatus.iBlockedThem ? "Unblock" : "Block"}
             </button>
           )}
+
+          {/* Three-dot Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-white/10 rounded-xl transition-all duration-200 text-white/70 hover:text-white"
+              title="More options"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+              </svg>
+            </button>
+
+            {showMenu && (
+              <>
+                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMenu(false)} />
+                <div className="absolute right-0 top-12 w-48 glass-card bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[1010] py-2 animate-premium-in">
+                  <button
+                    onClick={handleArchive}
+                    className="w-full px-4 py-3 text-left text-sm font-medium text-black hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    {chat.isArchived ? "Unarchive Chat" : "Archive Chat"}
+                  </button>
+                  <button
+                    onClick={handleClearChat}
+                    className="w-full px-4 py-3 text-left text-sm font-medium text-black hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Clear Chat
+                  </button>
+                  <button
+                    onClick={handleHide}
+                    className="w-full px-4 py-3 text-left text-sm font-medium text-red-400/70 hover:text-red-400 hover:bg-red-500/5 transition-colors flex items-center gap-3"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Chat
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Close Chat Button */}
           {onBack && (

@@ -16,77 +16,32 @@ export default function ChatListItem({ item, active, onClick, userId }) {
   // ✅ Decrypt last message for sidebar
   useEffect(() => {
     const decrypt = async () => {
-      if (!item.lastEncryptedBody || !privateKey) return;
-
-      try {
-        const myKeyObj = (item.lastEncryptedKeys || []).find(
-          k => String(k.user) === String(userId)
-        );
-        const encryptedKey = myKeyObj?.key;
-
-        if (encryptedKey) {
-          const plainText = await decryptMessage(
-            item.lastEncryptedBody,
-            encryptedKey,
-            privateKey
-          );
-          setDecryptedLast(plainText);
+      if (item.lastEncryptedBody && item.lastEncryptedKeys && privateKey) {
+        try {
+          const keyEntry = item.lastEncryptedKeys.find(k => String(k.user) === String(user.id) || String(k.user?._id) === String(user.id));
+          if (keyEntry) {
+            const body = await decryptMessage(item.lastEncryptedBody, keyEntry.key, privateKey);
+            setDecryptedLast(body);
+          } else {
+            setDecryptedLast(item.lastMessage);
+          }
+        } catch (err) {
+          console.error("Sidebar decryption failed:", err);
+          setDecryptedLast(item.lastMessage);
         }
-      } catch (err) {
-        console.error("Sidebar decryption failed:", err);
+      } else {
+        setDecryptedLast(item.lastMessage);
       }
     };
     decrypt();
-  }, [item.lastEncryptedBody, item.lastEncryptedKeys, userId, privateKey]);
+  }, [item.lastEncryptedBody, item.lastEncryptedKeys, item.lastMessage, privateKey, user.id]);
 
-  const displayName = item.isGroup
-    ? item.title
-    : (item.other?.full_name || item.other?.phone);
-
-  const avatarInitial = item.isGroup
-    ? (item.title?.[0] || "G")
-    : (item.other?.full_name?.[0] || item.other?.phone?.slice(-2));
+  const avatarInitial = (item.title || item.other?.full_name || item.other?.phone || "?")[0];
+  const displayName = item.isGroup ? item.title : (item.other?.full_name || item.other?.phone);
 
   // Check if chat is pinned for this user
   const isPinned = item.isPinned || item.pinnedBy?.includes(userId);
   const isOnline = !item.isGroup && item.other?.isOnline;
-
-  const handlePin = (e) => {
-    e.stopPropagation();
-    if (isPinned) {
-      socket.emit("chat:unpin", { chatId: item.id });
-    } else {
-      socket.emit("chat:pin", { chatId: item.id });
-    }
-  };
-
-  const handleArchive = async (e) => {
-    e.stopPropagation();
-    try {
-      await axios.post(`${API_BASE}/chats/${item.id}/archive`, {
-        archive: !item.isArchived
-      }, {
-        headers: { Authorization: `Bearer ${user?.token}` }
-      });
-      // Sidebar should refresh or use local state update
-      window.dispatchEvent(new CustomEvent("chats:refresh"));
-    } catch (err) {
-      console.error("Archive failed:", err);
-    }
-  };
-
-  const handleHide = async (e) => {
-    e.stopPropagation();
-    if (!window.confirm("Delete this chat? Messages will be preserved but the chat will disappear until you search for this contact again.")) return;
-    try {
-      await axios.post(`${API_BASE}/chats/${item.id}/hide`, {}, {
-        headers: { Authorization: `Bearer ${user?.token}` }
-      });
-      window.dispatchEvent(new CustomEvent("chats:refresh"));
-    } catch (err) {
-      console.error("Hide failed:", err);
-    }
-  };
 
   const handleAvatarClick = (e) => {
     e.stopPropagation();
@@ -142,9 +97,11 @@ export default function ChatListItem({ item, active, onClick, userId }) {
                     {displayName}
                   </div>
                   {isPinned && (
-                    <svg className="w-3 h-3 text-blue-400 rotate-45" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 2a1 1 0 011 1v1.323l3.945 2.035a1 1 0 01.555.894V10a1 1 0 01-1 1H5.5a1 1 0 01-1-1V7.252a1 1 0 01.555-.894L9 4.323V3a1 1 0 011-1z" />
-                    </svg>
+                    <span className="text-blue-500 flex-shrink-0" title="Pinned chat">
+                      <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                        <path d="M10 2a1 1 0 011 1v1.323l3.945 2.035a1 1 0 01.555.894V10a1 1 0 01-1 1H5.5a1 1 0 01-1-1V7.252a1 1 0 01.555-.894L9 4.323V3a1 1 0 011-1z" />
+                      </svg>
+                    </span>
                   )}
                   {item.isArchived && (
                     <span className="text-[9px] bg-white/10 text-white/50 px-1.5 py-0.5 rounded uppercase tracking-tighter">Archived</span>
@@ -172,37 +129,6 @@ export default function ChatListItem({ item, active, onClick, userId }) {
             </div>
           </div>
         </button>
-
-        {/* Quick Actions (Hover Only) */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
-          <button
-            onClick={handlePin}
-            className={`p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors ${isPinned ? 'text-blue-400' : 'text-white/40 hover:text-white'}`}
-            title={isPinned ? "Unpin" : "Pin"}
-          >
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 2a1 1 0 011 1v1.323l3.945 2.035a1 1 0 01.555.894V10a1 1 0 01-1 1H5.5a1 1 0 01-1-1V7.252a1 1 0 01.555-.894L9 4.323V3a1 1 0 011-1z" />
-            </svg>
-          </button>
-          <button
-            onClick={handleArchive}
-            className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors"
-            title={item.isArchived ? "Unarchive" : "Archive"}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-            </svg>
-          </button>
-          <button
-            onClick={handleHide}
-            className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white/40 hover:text-red-400 transition-colors"
-            title="Delete Chat (Hide)"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-          </button>
-        </div>
       </div>
 
       {/* Lightbox for avatar */}
