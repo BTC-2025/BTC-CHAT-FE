@@ -62,9 +62,32 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
     fetchChatsOnce();
   }, [user, onOpenChat]);
 
+  const fetchChat = useCallback(async (chatId) => {
+    try {
+      const { data } = await axios.get(`${API_BASE}/chats/${chatId}`, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      });
+      setChats((prev) => {
+        const exists = prev.some(c => c.id === data.id);
+        if (exists) return prev;
+        return sortChats([data, ...prev], user?.id);
+      });
+    } catch (err) {
+      console.error("Failed to fetch new chat:", err);
+    }
+  }, [user?.token, user?.id]);
+
   useEffect(() => {
     const onNewMessage = (msg) => {
       setChats((prev) => {
+        const chatExists = prev.some(c => c.id === msg.chat);
+
+        if (!chatExists) {
+          // Discover new chat!
+          fetchChat(msg.chat);
+          return prev;
+        }
+
         const updated = prev.map((c) => {
           if (c.id === msg.chat) {
             return {
@@ -73,7 +96,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
               lastAt: msg.createdAt,
               lastEncryptedBody: msg.encryptedBody || null,
               lastEncryptedKeys: msg.encryptedKeys || [],
-              unread: (String(msg.sender) !== String(user?.id) && String(msg.sender?._id) !== String(user?.id))
+              unread: (String(msg.sender) !== String(user?.id) && String(msg.sender?._id) !== String(user?.id) && String(msg.chat) !== String(activeChatId))
                 ? (c.unread || 0) + 1
                 : c.unread
             };
@@ -86,7 +109,16 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
     socket.on("message:new", onNewMessage);
     return () => socket.off("message:new", onNewMessage);
-  }, [user?.id]);
+  }, [user?.id, activeChatId, fetchChat]);
+
+  // ✅ Auto-clear unread for active chat
+  useEffect(() => {
+    if (activeChatId) {
+      setChats((prev) =>
+        prev.map((c) => (c.id === activeChatId ? { ...c, unread: 0 } : c))
+      );
+    }
+  }, [activeChatId]);
 
   useEffect(() => {
     const onUnreadReset = ({ chatId, unreadResetFor }) => {
