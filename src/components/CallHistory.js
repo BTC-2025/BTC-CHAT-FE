@@ -1,5 +1,5 @@
 // client/src/components/CallHistory.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -10,7 +10,7 @@ export default function CallHistory({ onStartCall }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchCalls = async () => {
+    const fetchCalls = useCallback(async () => {
         try {
             const { data } = await axios.get(`${API_BASE}/calls/get-calls`, {
                 headers: { Authorization: `Bearer ${user?.token}` }
@@ -22,11 +22,11 @@ export default function CallHistory({ onStartCall }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.token]);
 
     useEffect(() => {
         if (user?.token) fetchCalls();
-    }, [user]);
+    }, [user?.token, fetchCalls]);
 
     if (loading) {
         return (

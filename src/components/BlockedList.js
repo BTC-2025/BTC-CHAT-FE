@@ -1,5 +1,5 @@
 // client/src/components/BlockedList.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -11,7 +11,7 @@ export default function BlockedList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchBlocked = async () => {
+    const fetchBlocked = useCallback(async () => {
         try {
             const { data } = await axios.get(`${API_BASE}/users/blocked`, {
                 headers: { Authorization: `Bearer ${user?.token}` }
@@ -23,11 +23,11 @@ export default function BlockedList() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.token]);
 
     useEffect(() => {
         if (user?.token) fetchBlocked();
-    }, [user]);
+    }, [user?.token, fetchBlocked]);
 
     const handleUnblock = (targetUserId) => {
         socket.emit("user:unblock", { targetUserId }, (res) => {

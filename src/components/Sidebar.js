@@ -11,6 +11,7 @@ import ProfileModal from "./ProfileModal";
 import BlockedList from "./BlockedList"; // ✅ Added
 import CallHistory from "./CallHistory"; // ✅ Added
 import NavRail from "./NavRail";
+import { requestNotificationPermission, unsubscribeFromNotifications } from "../utils/notificationHelper";
 
 export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
   const { user } = useAuth();
@@ -19,6 +20,24 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
   const [openJoin, setOpenJoin] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("chats"); // chats, groups, calls, status, settings
+  const [notifSettings, setNotifSettings] = useState(() =>
+    JSON.parse(localStorage.getItem("notificationSettings") || '{"sound":true,"push":true}')
+  );
+
+  const toggleSetting = async (key) => {
+    const newVal = !notifSettings[key];
+    const newSettings = { ...notifSettings, [key]: newVal };
+    setNotifSettings(newSettings);
+    localStorage.setItem("notificationSettings", JSON.stringify(newSettings));
+
+    if (key === "push") {
+      if (newVal) {
+        await requestNotificationPermission(user.token);
+      } else {
+        await unsubscribeFromNotifications(user.token);
+      }
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -198,6 +217,32 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
               <span>Account Information</span>
               <svg className="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
             </button>
+            <div className="p-4 bg-white/5 rounded-2xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-bold">Sound Notifications</div>
+                  <div className="text-[10px] opacity-40 uppercase tracking-widest font-black">Incoming messages</div>
+                </div>
+                <button
+                  onClick={() => toggleSetting("sound")}
+                  className={`w-12 h-6 rounded-full transition-all relative ${notifSettings.sound ? "bg-primary" : "bg-white/10"}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifSettings.sound ? "right-1" : "left-1"}`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                <div>
+                  <div className="font-bold">Push Notifications</div>
+                  <div className="text-[10px] opacity-40 uppercase tracking-widest font-black">Browser popups</div>
+                </div>
+                <button
+                  onClick={() => toggleSetting("push")}
+                  className={`w-12 h-6 rounded-full transition-all relative ${notifSettings.push ? "bg-primary" : "bg-white/10"}`}
+                >
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${notifSettings.push ? "right-1" : "left-1"}`} />
+                </button>
+              </div>
+            </div>
             <div className="p-4 bg-white/5 rounded-2xl space-y-3">
               <div className="flex justify-between items-center opacity-70">
                 <span>Theme</span>

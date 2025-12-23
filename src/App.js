@@ -7,6 +7,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy.js"; // ✅ New Import
 import DisabledAccount from "./components/DisabledAccount.js"; // ✅ New Import
 import logo from "./assets/Blue-Chat.jpeg";
 import { useState, useEffect } from "react";
+import { requestNotificationPermission } from "./utils/notificationHelper";
 
 export default function App() {
   const { user } = useAuth();
@@ -19,6 +20,13 @@ export default function App() {
     window.addEventListener("popstate", handleLocationChange);
     return () => window.removeEventListener("popstate", handleLocationChange);
   }, []);
+
+  // ✅ Initialize Notifications on Login
+  useEffect(() => {
+    if (user && user.token) {
+      requestNotificationPermission(user.token);
+    }
+  }, [user]);
 
   // ✅ 0. Check if account is disabled
   if (user?.isDisabled) {

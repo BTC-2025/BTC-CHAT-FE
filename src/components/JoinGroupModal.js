@@ -23,7 +23,7 @@ export default function JoinGroupModal({ open, onClose, onRefresh }) {
         setLoading(true);
         setError(null);
         try {
-            const { data } = await axios.post(
+            await axios.post(
                 `${API_BASE}/groups/join/${code}`,
                 {},
                 { headers: { Authorization: `Bearer ${user?.token}` } }

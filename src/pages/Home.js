@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext.js";
 import logo from "../assets/Blue-Chat.jpeg";
+import { playNotificationSound } from "../utils/notificationHelper";
 
 export default function Home() {
   const { user } = useAuth();
@@ -96,6 +97,25 @@ export default function Home() {
     socket.on("call:incoming", handleIncomingCall);
     return () => socket.off("call:incoming", handleIncomingCall);
   }, []);
+
+  // ✅ Listen for incoming messages for sound/notifications
+  useEffect(() => {
+    const handleNewMessage = (msg) => {
+      // Play sound if:
+      // 1. App is foreground (handled by being here)
+      // 2. Message is not from me
+      // 3. Current active chat is NOT this chat
+      if (msg.sender?._id !== user.id && activeChat?.id !== msg.chat) {
+        const settings = JSON.parse(localStorage.getItem("notificationSettings") || '{"sound":true}');
+        if (settings.sound) {
+          playNotificationSound();
+        }
+      }
+    };
+
+    socket.on("message:new", handleNewMessage);
+    return () => socket.off("message:new", handleNewMessage);
+  }, [activeChat, user.id]);
 
   // When a chat is selected
   const handleOpenChat = (chat) => {

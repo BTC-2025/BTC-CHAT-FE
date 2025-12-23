@@ -1,5 +1,5 @@
 // client/src/components/GroupManageModal.js
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -13,7 +13,7 @@ export default function GroupManageModal({ chat, open, onClose }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -30,14 +30,14 @@ export default function GroupManageModal({ chat, open, onClose }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [chatId, user?.token]);
 
   useEffect(() => {
     if (open && chatId) {
       setGroup(null); // Reset on open
       load();
     }
-  }, [open, chatId]);
+  }, [open, chatId, load]);
 
   if (!open) return null;
 
