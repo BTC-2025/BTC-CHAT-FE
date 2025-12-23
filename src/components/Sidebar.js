@@ -238,11 +238,36 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
         <div className="px-5 pt-6 pb-2">
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-2xl font-black">{getTitle()}</h2>
-            {activeTab === 'groups' && (
-              <button onClick={() => setOpenCreate(true)} className="w-8 h-8 flex items-center justify-center bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
-              </button>
-            )}
+            <div className="flex gap-2">
+              {activeTab === 'groups' && (
+                <>
+                  <button
+                    onClick={async () => {
+                      const code = window.prompt("Enter Group Invite Code:");
+                      if (!code) return;
+                      try {
+                        const { data } = await axios.post(`${API_BASE}/groups/join/${code}`, {}, {
+                          headers: { Authorization: `Bearer ${user?.token}` }
+                        });
+                        if (data.success) {
+                          alert("Joined group successfully!");
+                          await load();
+                        }
+                      } catch (e) {
+                        alert(e.response?.data?.message || "Invalid or expired code");
+                      }
+                    }}
+                    className="h-8 px-3 flex items-center justify-center bg-secondary text-primary-dark rounded-lg hover:bg-secondary-dark transition-colors text-xs font-bold"
+                    title="Join group with code"
+                  >
+                    Join
+                  </button>
+                  <button onClick={() => setOpenCreate(true)} className="w-8 h-8 flex items-center justify-center bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors" title="Create new group">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
           <SearchBar onOpen={async (chat) => { onOpenChat(chat); await load(); }} />
         </div>

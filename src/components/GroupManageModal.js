@@ -128,6 +128,33 @@ export default function GroupManageModal({ chat, open, onClose }) {
     }
   };
 
+  const handleLeave = async () => {
+    if (!window.confirm("Are you sure you want to leave this group?")) return;
+    try {
+      await axios.post(`${API_BASE}/groups/${chatId}/leave`, {}, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      onClose();
+      // Force reload chats
+      window.dispatchEvent(new CustomEvent("chats:refresh"));
+    } catch (e) {
+      alert(e.response?.data?.message || "Failed to leave group");
+    }
+  };
+
+  const generateInvite = async () => {
+    try {
+      const { data } = await axios.post(`${API_BASE}/groups/${chatId}/invite`, {}, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      if (data.success) {
+        setGroup(prev => ({ ...prev, inviteCode: data.inviteCode }));
+      }
+    } catch (e) {
+      alert(e.response?.data?.message || "Failed to generate invite");
+    }
+  };
+
   const isAdmin = group.admins.includes(user.id);
 
   return (
@@ -139,33 +166,69 @@ export default function GroupManageModal({ chat, open, onClose }) {
         </div>
 
         {/* META */}
-        <input
-          disabled={!isAdmin}
-          className="w-full bg-background border border-background-dark mb-2 px-3 py-2.5 rounded-lg text-sm sm:text-base outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 text-primary"
-          value={meta.title}
-          onChange={(e) => setMeta({ ...meta, title: e.target.value })}
-        />
-        <input
-          disabled={!isAdmin}
-          className="w-full bg-background border border-background-dark mb-3 px-3 py-2.5 rounded-lg text-sm sm:text-base outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 text-primary"
-          value={meta.description}
-          onChange={(e) =>
-            setMeta({ ...meta, description: e.target.value })
-          }
-        />
+        <div className="space-y-2 mb-4">
+          <input
+            disabled={!isAdmin}
+            className="w-full bg-background border border-background-dark px-3 py-2.5 rounded-lg text-sm sm:text-base outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 text-primary"
+            value={meta.title}
+            onChange={(e) => setMeta({ ...meta, title: e.target.value })}
+            placeholder="Group Title"
+          />
+          <input
+            disabled={!isAdmin}
+            className="w-full bg-background border border-background-dark px-3 py-2.5 rounded-lg text-sm sm:text-base outline-none focus:ring-2 focus:ring-secondary disabled:opacity-50 text-primary"
+            value={meta.description}
+            onChange={(e) =>
+              setMeta({ ...meta, description: e.target.value })
+            }
+            placeholder="Group Description"
+          />
+          {isAdmin && (
+            <button
+              onClick={saveMeta}
+              className="px-4 py-2 bg-primary rounded-lg hover:bg-primary-light text-sm font-medium transition-colors text-white"
+            >
+              Save Changes
+            </button>
+          )}
+        </div>
 
+        {/* INVITE LINK (Admin Only) */}
         {isAdmin && (
-          <button
-            onClick={saveMeta}
-            className="px-3 py-2 mb-4 bg-primary rounded-lg hover:bg-primary-light text-sm font-medium transition-colors text-white"
-          >
-            Save
-          </button>
+          <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-xl">
+            <div className="text-sm font-bold text-primary mb-2 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
+              Invite Link
+            </div>
+            {group.inviteCode ? (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-white border border-background-dark px-3 py-2 rounded-lg text-sm font-mono text-primary truncate">
+                  {group.inviteCode}
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(group.inviteCode);
+                    alert("Invite code copied!");
+                  }}
+                  className="px-3 py-2 bg-secondary text-primary-dark rounded-lg text-xs font-bold hover:bg-secondary-dark transition-colors"
+                >
+                  Copy
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={generateInvite}
+                className="w-full py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-light transition-colors"
+              >
+                Generate Invite Link
+              </button>
+            )}
+          </div>
         )}
 
         {/* MEMBERS */}
-        <div className="text-sm text-primary/60 mb-2">Members</div>
-        <div className="max-h-60 overflow-y-auto space-y-2">
+        <div className="text-sm text-primary/60 mb-2 font-bold tracking-tight uppercase">Members ({group.members.length})</div>
+        <div className="max-h-60 overflow-y-auto space-y-2 mb-4 custom-scrollbar">
           {group.members.map((m) => {
             const isMAdmin = group.admins.includes(m.id);
 
@@ -175,15 +238,18 @@ export default function GroupManageModal({ chat, open, onClose }) {
                 className="flex items-center justify-between bg-background border border-background-dark px-3 py-2 rounded-lg"
               >
                 <div className="min-w-0">
-                  <div className="text-sm sm:text-base truncate text-primary">{m.name || m.phone}</div>
+                  <div className="text-sm sm:text-base font-semibold truncate text-primary flex items-center gap-2">
+                    {m.name || m.phone}
+                    {isMAdmin && <span className="text-[10px] bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-500/20">Admin</span>}
+                  </div>
                   <div className="text-xs text-primary/60">{m.phone}</div>
                 </div>
 
-                {isAdmin && (
+                {isAdmin && m.id !== user.id && (
                   <div className="flex gap-1 sm:gap-2 flex-shrink-0">
                     <button
                       onClick={() => removeMember(m.phone)}
-                      className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                      className="px-2 py-1 bg-red-400/10 text-red-500 rounded text-xs hover:bg-red-500 hover:text-white transition-all font-bold"
                     >
                       Remove
                     </button>
@@ -191,18 +257,18 @@ export default function GroupManageModal({ chat, open, onClose }) {
                     {!isMAdmin && (
                       <button
                         onClick={() => toggleAdmin(m.phone, true)}
-                        className="px-2 py-1 bg-secondary text-primary-dark rounded text-xs hover:bg-secondary-dark transition-colors"
+                        className="px-2 py-1 bg-secondary text-primary-dark rounded text-xs hover:bg-secondary-dark transition-colors font-bold"
                       >
-                        Admin
+                        Make Admin
                       </button>
                     )}
 
                     {isMAdmin && (
                       <button
                         onClick={() => toggleAdmin(m.phone, false)}
-                        className="px-2 py-1 bg-primary/20 text-primary rounded text-xs hover:bg-primary/30 transition-colors"
+                        className="px-2 py-1 bg-primary/10 text-primary rounded text-xs hover:bg-primary/20 transition-colors font-bold"
                       >
-                        Remove Admin
+                        Dismiss Admin
                       </button>
                     )}
                   </div>
@@ -214,21 +280,32 @@ export default function GroupManageModal({ chat, open, onClose }) {
 
         {/* ADD MEMBER */}
         {isAdmin && (
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex gap-2 mb-6">
             <input
               className="flex-1 bg-background border border-background-dark px-3 py-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-secondary text-primary placeholder:text-primary/50"
-              placeholder="Enter phone"
+              placeholder="Add member by phone..."
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             <button
               onClick={addMember}
-              className="px-3 py-2 bg-primary rounded-lg text-sm font-medium hover:bg-primary-light transition-colors text-white"
+              className="px-4 py-2 bg-primary rounded-lg text-sm font-bold hover:bg-primary-light transition-colors text-white"
             >
               Add
             </button>
           </div>
         )}
+
+        {/* LEAVE GROUP */}
+        <div className="border-t border-background-dark pt-4">
+          <button
+            onClick={handleLeave}
+            className="w-full py-3 bg-red-500/10 text-red-600 rounded-xl text-sm font-bold hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
+            Leave Group
+          </button>
+        </div>
       </div>
     </div>
   );
