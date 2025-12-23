@@ -65,6 +65,12 @@ export const unsubscribeFromNotifications = async (userToken) => {
 };
 
 export const playNotificationSound = () => {
-    const audio = new Audio("/notification.mp3"); // Ensure this file exists in public/
-    audio.play().catch(err => console.error("Failed to play notification sound:", err));
+    console.log("🔔 Attempting to play notification sound...");
+    const audio = new Audio("/notification.mp3");
+    audio.play()
+        .then(() => console.log("🔊 Notification sound played successfully"))
+        .catch(err => {
+            console.error("❌ Failed to play notification sound:", err.message);
+            console.log("💡 Tip: Most browsers require a user interaction (click/tap) before playing sound.");
+        });
 };

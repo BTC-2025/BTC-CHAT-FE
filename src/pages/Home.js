@@ -101,12 +101,23 @@ export default function Home() {
   // ✅ Listen for incoming messages for sound/notifications
   useEffect(() => {
     const handleNewMessage = (msg) => {
-      // Play sound if:
-      // 1. App is foreground (handled by being here)
-      // 2. Message is not from me
-      // 3. Current active chat is NOT this chat
-      if (msg.sender?._id !== user.id && activeChat?.id !== msg.chat) {
+      console.log("📨 New message received for sound check:", {
+        msgId: msg._id,
+        chatId: msg.chat,
+        senderId: msg.sender?._id || msg.sender,
+        activeChatId: activeChat?.id,
+        myId: user?.id
+      });
+
+      const senderId = msg.sender?._id || msg.sender;
+      const isFromMe = String(senderId) === String(user?.id);
+      const isCurrentChat = String(activeChat?.id) === String(msg.chat);
+
+      console.log("🔍 Condition check:", { isFromMe, isCurrentChat });
+
+      if (!isFromMe && !isCurrentChat) {
         const settings = JSON.parse(localStorage.getItem("notificationSettings") || '{"sound":true}');
+        console.log("⚙️ Notification settings:", settings);
         if (settings.sound) {
           playNotificationSound();
         }
@@ -115,7 +126,7 @@ export default function Home() {
 
     socket.on("message:new", handleNewMessage);
     return () => socket.off("message:new", handleNewMessage);
-  }, [activeChat, user.id]);
+  }, [activeChat, user?.id]);
 
   // When a chat is selected
   const handleOpenChat = (chat) => {
