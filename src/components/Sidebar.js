@@ -6,6 +6,7 @@ import ChatList from "./ChatList.js";
 import { useAuth } from "../context/AuthContext.js";
 import { socket } from "../socket";
 import GroupCreateModal from "./GroupCreateModal";
+import JoinGroupModal from "./JoinGroupModal";
 import ProfileModal from "./ProfileModal";
 import NavRail from "./NavRail";
 
@@ -13,6 +14,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
   const [openCreate, setOpenCreate] = useState(false);
+  const [openJoin, setOpenJoin] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
   const [activeTab, setActiveTab] = useState("chats"); // chats, groups, calls, status, settings
 
@@ -242,21 +244,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
               {activeTab === 'groups' && (
                 <>
                   <button
-                    onClick={async () => {
-                      const code = window.prompt("Enter Group Invite Code:");
-                      if (!code) return;
-                      try {
-                        const { data } = await axios.post(`${API_BASE}/groups/join/${code}`, {}, {
-                          headers: { Authorization: `Bearer ${user?.token}` }
-                        });
-                        if (data.success) {
-                          alert("Joined group successfully!");
-                          await load();
-                        }
-                      } catch (e) {
-                        alert(e.response?.data?.message || "Invalid or expired code");
-                      }
-                    }}
+                    onClick={() => setOpenJoin(true)}
                     className="h-8 px-3 flex items-center justify-center bg-secondary text-primary-dark rounded-lg hover:bg-secondary-dark transition-colors text-xs font-bold"
                     title="Join group with code"
                   >
@@ -343,6 +331,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
       <ProfileModal open={openProfile} onClose={() => setOpenProfile(false)} />
       <GroupCreateModal open={openCreate} onClose={() => setOpenCreate(false)} onCreated={async () => { setOpenCreate(false); await load(); }} />
+      <JoinGroupModal open={openJoin} onClose={() => setOpenJoin(false)} onRefresh={load} />
     </div>
   );
 }

@@ -155,6 +155,20 @@ export default function GroupManageModal({ chat, open, onClose }) {
     }
   };
 
+  const approveRequest = async (targetUserId, approve) => {
+    try {
+      await axios.post(`${API_BASE}/groups/${chatId}/approve`, {
+        targetUserId,
+        approve
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      load();
+    } catch (e) {
+      alert(e.response?.data?.message || "Failed to process request");
+    }
+  };
+
   const isAdmin = group.admins.includes(user.id);
 
   return (
@@ -192,6 +206,37 @@ export default function GroupManageModal({ chat, open, onClose }) {
             </button>
           )}
         </div>
+
+        {/* PENDING REQUESTS (Admin Only) */}
+        {isAdmin && group.pendingParticipants?.length > 0 && (
+          <div className="mb-6 animate-in slide-in-from-top duration-300">
+            <div className="text-xs font-bold text-secondary mb-2 tracking-widest uppercase">Pending Join Requests ({group.pendingParticipants.length})</div>
+            <div className="space-y-2">
+              {group.pendingParticipants.map((p) => (
+                <div key={p.id} className="flex items-center justify-between bg-secondary/5 border border-secondary/20 p-3 rounded-xl">
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-primary truncate">{p.name || p.phone}</div>
+                    <div className="text-[10px] text-primary/40">{p.phone}</div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => approveRequest(p.id, true)}
+                      className="px-3 py-1.5 bg-secondary text-primary-dark rounded-lg text-xs font-black hover:bg-secondary-dark transition-all"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => approveRequest(p.id, false)}
+                      className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-bold hover:bg-primary/20 transition-all"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* INVITE LINK (Admin Only) */}
         {isAdmin && (
