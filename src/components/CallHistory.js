@@ -24,6 +24,19 @@ export default function CallHistory({ onStartCall }) {
         }
     }, [user?.token]);
 
+    const handleClear = async () => {
+        if (!window.confirm("Clear all call history? This cannot be undone.")) return;
+        try {
+            await axios.delete(`${API_BASE}/calls/clear`, {
+                headers: { Authorization: `Bearer ${user?.token}` }
+            });
+            setCalls([]);
+        } catch (err) {
+            console.error("Failed to clear call history:", err);
+            alert("Failed to clear call history");
+        }
+    };
+
     useEffect(() => {
         if (user?.token) fetchCalls();
     }, [user?.token, fetchCalls]);
@@ -47,9 +60,19 @@ export default function CallHistory({ onStartCall }) {
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-[#040712]">
-            <div className="px-5 pt-8 pb-4">
-                <h2 className="text-2xl font-black text-white">Call History</h2>
-                <p className="text-xs text-white/40 mt-1">Review your past audio and video interactions.</p>
+            <div className="px-5 pt-8 pb-4 flex items-end justify-between">
+                <div>
+                    <h2 className="text-2xl font-black text-white">Call History</h2>
+                    <p className="text-xs text-white/40 mt-1">Review your past audio and video interactions.</p>
+                </div>
+                {calls.length > 0 && (
+                    <button
+                        onClick={handleClear}
+                        className="text-[10px] font-black uppercase tracking-widest text-red-400/60 hover:text-red-400 px-3 py-1.5 rounded-lg border border-red-400/10 hover:bg-red-400/5 transition-all"
+                    >
+                        Clear All
+                    </button>
+                )}
             </div>
 
             <div className="flex-1 overflow-y-auto px-3 space-y-2 custom-scrollbar pb-20">
