@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { API_BASE } from "../api";
 
-export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
+export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, members = [] }) {
   const { user } = useAuth();
   const [val, setVal] = useState("");
   const [typing, setTyping] = useState(false);
@@ -14,6 +14,9 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
   const [recordingTime, setRecordingTime] = useState(0);
   const [scheduledAt, setScheduledAt] = useState(null); // ✅ New State
   const [showPicker, setShowPicker] = useState(false); // ✅ New State
+  const [showMentions, setShowMentions] = useState(false); // ✅ New State
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -63,9 +66,55 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
       setTyping(false);
       socket.emit("typing:stop", { chatId });
     }, 800);
+
+    // ✅ Mention Detection
+    const lastWord = v.split(/\s/).pop();
+    if (lastWord.startsWith("@") && members.length > 0) {
+      setShowMentions(true);
+      setMentionQuery(lastWord.slice(1).toLowerCase());
+      setMentionIndex(0);
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  const filteredMembers = members.filter(m =>
+    m.name?.toLowerCase().includes(mentionQuery) ||
+    m.phone?.includes(mentionQuery)
+  );
+
+  const insertMention = (member) => {
+    const words = val.split(" ");
+    words.pop(); // Remove the @query part
+    const newVal = words.join(" ") + (words.length ? " " : "") + "@" + member.name + " ";
+    setVal(newVal);
+    setShowMentions(false);
+    if (textareaRef.current) textareaRef.current.focus();
   };
 
   const handleKeyDown = (e) => {
+    if (showMentions && filteredMembers.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex(prev => (prev + 1) % filteredMembers.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex(prev => (prev - 1 + filteredMembers.length) % filteredMembers.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(filteredMembers[mentionIndex]);
+        return;
+      }
+      if (e.key === "Escape") {
+        setShowMentions(false);
+        return;
+      }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       submit();
@@ -202,7 +251,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 relative">
       {/* Reply Preview */}
       {replyTo && (
         <div className="flex items-center gap-2 p-2 bg-secondary/10 rounded-xl border border-secondary/30">
@@ -308,6 +357,39 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply }) {
             >
               Set
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mention Suggestions */}
+      {showMentions && filteredMembers.length > 0 && (
+        <div className="absolute bottom-full left-0 w-64 mb-2 bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-premium-in">
+          <div className="p-2 border-b border-white/5 text-[10px] font-black uppercase tracking-widest text-white/40">
+            Mention Participant
+          </div>
+          <div className="max-h-48 overflow-y-auto custom-scrollbar">
+            {filteredMembers.map((m, idx) => (
+              <button
+                key={m.id}
+                onClick={() => insertMention(m)}
+                className={`w-full flex items-center gap-3 px-4 py-3 transition-all ${idx === mentionIndex ? "bg-primary text-white" : "hover:bg-white/5 text-white/70"
+                  }`}
+              >
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/20 flex-shrink-0">
+                  {m.avatar ? (
+                    <img src={m.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center font-bold text-xs uppercase">
+                      {m.name?.[0] || "?"}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-bold text-sm truncate">{m.name}</div>
+                  <div className="text-[10px] opacity-60 truncate">{m.phone}</div>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       )}

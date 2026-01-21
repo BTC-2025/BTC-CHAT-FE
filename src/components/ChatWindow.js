@@ -543,6 +543,30 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
 
               {!chat.isGroup && !chat.isSelfChat && (
                 <>
+                  {/* Favorite Toggle Button */}
+                  <button
+                    onClick={async () => {
+                      try {
+                        const { data } = await axios.post(`${API_BASE}/users/favorites/toggle`, { targetId: chat.other.id }, {
+                          headers: { Authorization: `Bearer ${user?.token}` }
+                        });
+                        if (data.success) {
+                          chat.other.isFavorite = data.isFavorite; // Update local state
+                          window.dispatchEvent(new CustomEvent("chats:refresh")); // Refresh sidebar
+                        }
+                      } catch (e) { console.error("Toggle favorite failed", e); }
+                    }}
+                    className={`p-2 rounded-xl transition-all duration-200 ring-1 ${chat.other?.isFavorite
+                      ? "bg-yellow-500/20 text-yellow-400 ring-yellow-500/30 shadow-[0_0_10px_rgba(250,204,21,0.2)]"
+                      : "bg-white/5 text-white/40 hover:text-white hover:bg-white/10 ring-white/10"
+                      }`}
+                    title={chat.other?.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <svg className="w-5 h-5" fill={chat.other?.isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </button>
+
                   {/* Audio Call Button */}
                   <button
                     onClick={() => onStartCall?.("audio")}
@@ -594,6 +618,30 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
                   <>
                     <div className="fixed inset-0 z-[1000]" onClick={() => setShowMenu(false)} />
                     <div className="absolute right-0 top-12 w-48 glass-card bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl z-[1010] py-2 animate-premium-in">
+                      <button
+                        onClick={async () => {
+                          try {
+                            const { data } = await axios.post(`${API_BASE}/users/favorites/toggle`, { targetId: chat.other.id }, {
+                              headers: { Authorization: `Bearer ${user?.token}` }
+                            });
+                            if (data.success) {
+                              chat.other.isFavorite = data.isFavorite; // Update local state
+                              window.dispatchEvent(new CustomEvent("chats:refresh")); // Refresh sidebar
+                            }
+                          } catch (e) { console.error("Toggle favorite failed", e); }
+                        }}
+                        className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center gap-3 ${chat.other?.isFavorite
+                          ? "text-yellow-400 hover:bg-yellow-500/5"
+                          : "text-white hover:bg-white/5"
+                          }`}
+                        title={chat.other?.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                      >
+                        <svg className="w-4 h-4" fill={chat.other?.isFavorite ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.382-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                        </svg>
+                        {chat.other?.isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                      </button>
+
                       <button
                         onClick={handleArchive}
                         className="w-full px-4 py-3 text-left text-sm font-medium text-white hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
@@ -784,6 +832,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
             chatId={chat.id}
             replyTo={replyTo}
             onCancelReply={() => setReplyTo(null)}
+            members={chat.members}
           />
         )}
       </div>

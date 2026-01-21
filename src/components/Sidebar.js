@@ -199,13 +199,18 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
       if (aIsPinned && !bIsPinned) return -1;
       if (!aIsPinned && bIsPinned) return 1;
 
-      // 3. Newest first
+      // 3. Favorites next
+      if (a.other?.isFavorite && !b.other?.isFavorite) return -1;
+      if (!a.other?.isFavorite && b.other?.isFavorite) return 1;
+
+      // 4. Newest first
       return new Date(b.lastAt) - new Date(a.lastAt);
     });
   };
 
   const filteredChats = chats.filter(c => {
     if (activeTab === "groups") return c.isGroup && !c.isArchived;
+    if (activeTab === "favorites") return !c.isGroup && c.other?.isFavorite && !c.isArchived;
     if (activeTab === "chats") return !c.isGroup && !c.isArchived;
     if (activeTab === "archived") return c.isArchived;
     return true; // fallback for others
@@ -298,6 +303,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
               </div>
             </div>
 
+            {/* 
             <div className="p-4 bg-white/5 rounded-2xl space-y-3">
               <div className="flex justify-between items-center opacity-70">
                 <span>Theme</span>
@@ -308,6 +314,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
                 <span className="text-emerald-400 font-bold">Enabled</span>
               </div>
             </div>
+*/}
           </div>
         </div>
       );
@@ -338,6 +345,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
 
     const getTitle = () => {
       if (activeTab === 'groups') return 'Groups';
+      if (activeTab === 'favorites') return 'Favorites';
       if (activeTab === 'archived') return 'Archived';
       return 'Chats';
     };

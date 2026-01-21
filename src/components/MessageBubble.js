@@ -527,9 +527,33 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
               <pre className="whitespace-pre-wrap break-words">{message.body}</pre>
             </div>
           </div>
-        ) : message.body || decryptedBody ? (
+        ) : (message.body || decryptedBody) ? (
           <div className="whitespace-pre-wrap text-sm sm:text-base break-words leading-relaxed">
-            {decryptedBody || message.body}
+            {(() => {
+              const text = decryptedBody || message.body;
+              if (!text) return null;
+
+              // Mention highlighting regex: @ followed by non-space characters
+              // Since we inject names like "@John Doe ", they might have spaces.
+              // We'll use a simpler approach: match @ followed by any word chars or spaces until another @ or end
+              // Better: match against actual group members if we had them, OR use a regex that handles names.
+              // Let's use a regex that matches @Name until a space or next mention.
+              const parts = text.split(/(@[a-zA-Z0-9\s]+?)(?=\s@|$|\s\W|\s\n)/g);
+
+              return parts.map((part, i) => {
+                if (part.startsWith("@")) {
+                  return (
+                    <span
+                      key={i}
+                      className={`font-black ${mine ? "text-secondary" : "text-primary-light"}`}
+                    >
+                      {part}
+                    </span>
+                  );
+                }
+                return part;
+              });
+            })()}
             {decryptionFailed && <span className="text-red-400 block text-xs mt-1">(Decryption failed)</span>}
           </div>
         ) : null}
