@@ -19,6 +19,18 @@ export default function MyBusinessDashboard({ onBack }) {
         category: '',
         inStock: true
     });
+    const [greetingType, setGreetingType] = useState('preset');
+    const [customGreeting, setCustomGreeting] = useState('');
+    const [selectedGreeting, setSelectedGreeting] = useState('');
+    const [isSavingGreeting, setIsSavingGreeting] = useState(false);
+
+    const PRESET_GREETINGS = [
+        "Hello! How can we help you today?",
+        "Welcome! We're here to assist you with anything you need.",
+        "Hi there! Check out our latest products while we get back to you.",
+        "Thanks for reaching out! Someone will be with you shortly.",
+        "Greetings! We appreciate your interest in our business."
+    ];
 
     useEffect(() => {
         loadData();
@@ -37,6 +49,13 @@ export default function MyBusinessDashboard({ onBack }) {
 
             setBusiness(businessRes.data);
             setProducts(productsRes.data);
+
+            // Initialize greeting state
+            const currentGreeting = businessRes.data.greetingMessage || "Hello! How can we help you today?";
+            const isPreset = PRESET_GREETINGS.includes(currentGreeting);
+            setGreetingType(isPreset ? 'preset' : 'custom');
+            setSelectedGreeting(isPreset ? currentGreeting : PRESET_GREETINGS[0]);
+            setCustomGreeting(isPreset ? '' : currentGreeting);
         } catch (error) {
             console.error('❌ Load error:', error.response?.data || error.message);
         } finally {
@@ -71,6 +90,29 @@ export default function MyBusinessDashboard({ onBack }) {
             loadData();
         } catch (error) {
             alert('Failed to delete');
+        }
+    };
+
+    const handleSaveGreeting = async () => {
+        try {
+            setIsSavingGreeting(true);
+            const messageToSave = greetingType === 'preset' ? selectedGreeting : customGreeting;
+            console.log('Saving Greeting Payload:', { greetingMessage: messageToSave });
+
+            await axios.patch(`${API_BASE}/business/update`, {
+                greetingMessage: messageToSave
+            }, {
+                headers: { Authorization: `Bearer ${user?.token}` }
+            });
+
+            // Update local state
+            setBusiness(prev => ({ ...prev, greetingMessage: messageToSave }));
+            alert('Greeting message updated successfully!');
+        } catch (error) {
+            console.error('Greeting update error:', error);
+            alert('Failed to update greeting message');
+        } finally {
+            setIsSavingGreeting(false);
         }
     };
 
@@ -149,8 +191,8 @@ export default function MyBusinessDashboard({ onBack }) {
                                 onClick={() => setActiveTab(tab)}
                                 disabled={tab === 'products' && business.status !== 'approved'}
                                 className={`py-4 font-bold capitalize border-b-4 transition-all ${activeTab === tab
-                                        ? 'border-primary text-primary'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
                                     } ${tab === 'products' && business.status !== 'approved' ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
                                 {tab}
@@ -243,6 +285,87 @@ export default function MyBusinessDashboard({ onBack }) {
                                                 <p className="text-gray-700">{business.address}</p>
                                             </div>
                                         )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Greeting Message Editor */}
+                            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+                                <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                                    <span className="text-2xl">👋</span>
+                                    Automated Daily Greeting
+                                </h3>
+                                <p className="text-gray-500 mb-6 text-sm">
+                                    This message will be sent automatically to users when they message you for the first time each day.
+                                </p>
+
+                                <div className="space-y-6">
+                                    <div className="flex flex-wrap gap-4">
+                                        <button
+                                            onClick={() => setGreetingType('preset')}
+                                            className={`px-4 py-2 rounded-lg font-bold border-2 transition-all ${greetingType === 'preset'
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-gray-200 text-gray-500 hover:border-primary/50'
+                                                }`}
+                                        >
+                                            Choose from Preset
+                                        </button>
+                                        <button
+                                            onClick={() => setGreetingType('custom')}
+                                            className={`px-4 py-2 rounded-lg font-bold border-2 transition-all ${greetingType === 'custom'
+                                                ? 'border-primary bg-primary/10 text-primary'
+                                                : 'border-gray-200 text-gray-500 hover:border-primary/50'
+                                                }`}
+                                        >
+                                            Write Custom Message
+                                        </button>
+                                    </div>
+
+                                    {greetingType === 'preset' ? (
+                                        <div className="space-y-3">
+                                            {PRESET_GREETINGS.map((msg, index) => (
+                                                <div
+                                                    key={index}
+                                                    onClick={() => setSelectedGreeting(msg)}
+                                                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center gap-3 ${selectedGreeting === msg
+                                                        ? 'border-primary bg-primary/5'
+                                                        : 'border-gray-100 hover:border-gray-200'
+                                                        }`}
+                                                >
+                                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedGreeting === msg ? 'border-primary' : 'border-gray-300'
+                                                        }`}>
+                                                        {selectedGreeting === msg && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                                                    </div>
+                                                    <p className="text-gray-700 font-medium">{msg}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <textarea
+                                                value={customGreeting}
+                                                onChange={(e) => setCustomGreeting(e.target.value)}
+                                                className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none text-black h-32"
+                                                placeholder="Type your custom greeting message here..."
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="flex justify-end pt-4">
+                                        <button
+                                            onClick={handleSaveGreeting}
+                                            disabled={isSavingGreeting || (greetingType === 'custom' && !customGreeting.trim())}
+                                            className="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-light transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                        >
+                                            {isSavingGreeting ? (
+                                                <>
+                                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    Saving...
+                                                </>
+                                            ) : (
+                                                'Save Greeting'
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -361,8 +484,8 @@ export default function MyBusinessDashboard({ onBack }) {
                                                     )}
                                                 </div>
                                                 <span className={`px-3 py-1 text-sm rounded-lg font-bold whitespace-nowrap ml-3 ${product.inStock
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-gray-100 text-gray-500'
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-gray-100 text-gray-500'
                                                     }`}>
                                                     {product.inStock ? '✓ In Stock' : 'Out of Stock'}
                                                 </span>

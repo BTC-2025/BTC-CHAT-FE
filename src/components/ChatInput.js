@@ -11,10 +11,9 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
   // ✅ Handle prefill message (e.g. from product inquiry)
   useEffect(() => {
     if (prefillMessage) {
-      setVal(prev => prev || prefillMessage); // Only set if empty or overwrite? User wants "Know More" -> prefill.
-      // Usually overwrite or append? 
-      // Let's simplified: If prefillMessage changes, set it.
+      setVal(prev => prev || prefillMessage);
       setVal(prefillMessage);
+      textareaRef.current?.focus();
     }
   }, [prefillMessage]);
   const [typing, setTyping] = useState(false);

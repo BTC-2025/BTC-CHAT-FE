@@ -133,9 +133,8 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
   }, [chat.id, user?.token, user.id]);
 
   const handleProductInquiry = (product) => {
-    setPrefillMessage(`Hi! I'm interested in ${product.name} (${product.currency === 'INR' ? '₹' : product.currency} ${product.price}). Is it available?`);
-    // Clear prefill after a short delay so effect can re-run if needed, or just let ChatInput handle it.
-    // Better: just set it. ChatInput effect will pick it up.
+    const currencySymbol = product.currency === 'INR' ? '₹' : product.currency;
+    setPrefillMessage(`${product.name} - ${currencySymbol} ${product.price}\n`);
   };
 
   const [typing, setTyping] = useState(false);
