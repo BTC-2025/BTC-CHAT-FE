@@ -23,6 +23,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
   // ✅ Reply/Forward state
   const [replyTo, setReplyTo] = useState(null);
   const [forwardMessage, setForwardMessage] = useState(null);
+  const [prefillMessage, setPrefillMessage] = useState(""); // ✅ New state
 
   // ✅ Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -130,6 +131,12 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       console.error("Failed to load messages:", err);
     }
   }, [chat.id, user?.token, user.id]);
+
+  const handleProductInquiry = (product) => {
+    setPrefillMessage(`Hi! I'm interested in ${product.name} (${product.currency === 'INR' ? '₹' : product.currency} ${product.price}). Is it available?`);
+    // Clear prefill after a short delay so effect can re-run if needed, or just let ChatInput handle it.
+    // Better: just set it. ChatInput effect will pick it up.
+  };
 
   const [typing, setTyping] = useState(false);
   const [presence, setPresence] = useState({
@@ -833,6 +840,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
             replyTo={replyTo}
             onCancelReply={() => setReplyTo(null)}
             members={chat.members}
+            prefillMessage={prefillMessage}
           />
         )}
       </div>
@@ -849,6 +857,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
         contact={chat.other}
         open={openContactInfo}
         onClose={() => setOpenContactInfo(false)}
+        onProductInquiry={handleProductInquiry} // ✅ Pass handler
       />
 
       {/* ✅ Forward Modal */}

@@ -1,12 +1,22 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { API_BASE } from "../api";
 
-export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, members = [] }) {
+export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, members = [], prefillMessage }) {
   const { user } = useAuth();
   const [val, setVal] = useState("");
+
+  // ✅ Handle prefill message (e.g. from product inquiry)
+  useEffect(() => {
+    if (prefillMessage) {
+      setVal(prev => prev || prefillMessage); // Only set if empty or overwrite? User wants "Know More" -> prefill.
+      // Usually overwrite or append? 
+      // Let's simplified: If prefillMessage changes, set it.
+      setVal(prefillMessage);
+    }
+  }, [prefillMessage]);
   const [typing, setTyping] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);

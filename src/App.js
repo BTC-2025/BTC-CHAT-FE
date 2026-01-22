@@ -5,6 +5,8 @@ import Home from "./pages/Home.js";
 import DeleteAccount from "./pages/DeleteAccount.js"; // ✅ New Import
 import PrivacyPolicy from "./pages/PrivacyPolicy.js"; // ✅ New Import
 import DisabledAccount from "./components/DisabledAccount.js"; // ✅ New Import
+import AdminLogin from "./pages/AdminLogin.js"; // ✅ Admin
+import AdminDashboard from "./pages/AdminDashboard.js"; // ✅ Admin
 import logo from "./assets/Blue-Chat.jpeg";
 import { useState, useEffect } from "react";
 import { requestNotificationPermission } from "./utils/notificationHelper";
@@ -41,6 +43,15 @@ export default function App() {
 
   if (path === "/privacy-policy") {
     return <PrivacyPolicy />;
+  }
+
+  // ✅ Admin routes (before auth check)
+  if (path === "/admin") {
+    return <AdminLogin />;
+  }
+
+  if (path === "/admin/dashboard") {
+    return <AdminDashboard />;
   }
 
   // ✅ 2. Auth handling

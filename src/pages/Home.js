@@ -2,6 +2,7 @@ import Sidebar from "../components/Sidebar.js";
 import ChatWindow from "../components/ChatWindow.js";
 import CallModal from "../components/CallModal.js";
 import StatusPage from "./StatusPage.js";
+import MyBusinessDashboard from "../components/MyBusinessDashboard.js"; // ✅ Business
 import { useState, useEffect } from "react";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext.js";
@@ -11,7 +12,7 @@ import { playNotificationSound, playRingtone, stopRingtone } from "../utils/noti
 export default function Home() {
   const { user } = useAuth();
   const [activeChat, setActiveChat] = useState(null);
-  const [view, setView] = useState("chats"); // "chats" or "status"
+  const [view, setView] = useState("chats"); // "chats", "status", or "my-business"
   const [reloadKey, setReloadKey] = useState(0);
 
   // ✅ Call state
@@ -30,6 +31,8 @@ export default function Home() {
     const path = window.location.pathname;
     if (path === "/status") {
       setView("status");
+    } else if (path === "/my-business") {
+      setView("my-business");
     } else {
       // Check localStorage for persisted chat
       const savedChatId = localStorage.getItem("activeChatId");
@@ -44,6 +47,10 @@ export default function Home() {
     if (view === "status") {
       if (window.location.pathname !== "/status") {
         window.history.pushState(null, "", "/status");
+      }
+    } else if (view === "my-business") {
+      if (window.location.pathname !== "/my-business") {
+        window.history.pushState(null, "", "/my-business");
       }
     } else if (activeChat) {
       // HIDE ID: Keep URL at / but save to localStorage
@@ -179,6 +186,10 @@ export default function Home() {
     return <StatusPage onBack={() => setView("chats")} />;
   }
 
+  if (view === "my-business") {
+    return <MyBusinessDashboard onBack={() => setView("chats")} />;
+  }
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-background">
       <div className="h-full w-full flex">
@@ -195,6 +206,7 @@ export default function Home() {
             onOpenChat={handleOpenChat}
             activeChatId={activeChat?.id}
             onViewStatus={() => setView("status")}
+            onViewMyBusiness={() => setView("my-business")}
           />
         </div>
 

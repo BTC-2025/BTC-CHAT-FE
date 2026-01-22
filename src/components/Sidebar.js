@@ -10,15 +10,18 @@ import JoinGroupModal from "./JoinGroupModal";
 import ProfileModal from "./ProfileModal";
 import BlockedList from "./BlockedList"; // ✅ Added
 import CallHistory from "./CallHistory"; // ✅ Added
+import BusinessRegistrationModal from "./BusinessRegistrationModal"; // ✅ Business
+import MyBusinessDashboard from "./MyBusinessDashboard"; // ✅ Business
 import NavRail from "./NavRail";
 import { requestNotificationPermission, unsubscribeFromNotifications } from "../utils/notificationHelper";
 
-export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
+export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onViewMyBusiness }) {
   const { user } = useAuth();
   const [chats, setChats] = useState([]);
   const [openCreate, setOpenCreate] = useState(false);
   const [openJoin, setOpenJoin] = useState(false);
   const [openProfile, setOpenProfile] = useState(false);
+  const [openBusinessReg, setOpenBusinessReg] = useState(false); // ✅ Business
   const [activeTab, setActiveTab] = useState("chats"); // chats, groups, calls, status, settings
   const [notifSettings, setNotifSettings] = useState(() =>
     JSON.parse(localStorage.getItem("notificationSettings") || '{"sound":true,"push":true}')
@@ -246,6 +249,30 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
               <span>Account Information</span>
               <svg className="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
             </button>
+
+            {/* My Business Button - Removed from here, now in main nav */}
+
+            {/* Business Registration Button - Only show if user doesn't have a business */}
+            {!user?.isBusiness && (
+              <button
+                onClick={() => setOpenBusinessReg(true)}
+                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 hover:from-green-500/20 hover:to-emerald-500/20 rounded-2xl transition-all border border-green-500/20"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <div className="font-bold text-green-500">Register Business Account</div>
+                    <div className="text-[10px] opacity-60 uppercase tracking-widest font-black">Start selling with catalog</div>
+                  </div>
+                </div>
+                <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
+              </button>
+            )}
+
             <div className="p-4 bg-white/5 rounded-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -446,6 +473,8 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
         onTabChange={(id) => {
           if (id === 'status') {
             onViewStatus();
+          } else if (id === 'my-business') {
+            onViewMyBusiness?.();
           } else {
             setActiveTab(id);
           }
@@ -460,6 +489,11 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus }) {
       <ProfileModal open={openProfile} onClose={() => setOpenProfile(false)} />
       <GroupCreateModal open={openCreate} onClose={() => setOpenCreate(false)} onCreated={async () => { setOpenCreate(false); await load(); }} />
       <JoinGroupModal open={openJoin} onClose={() => setOpenJoin(false)} onRefresh={load} />
+      <BusinessRegistrationModal
+        open={openBusinessReg}
+        onClose={() => setOpenBusinessReg(false)}
+        onSuccess={async () => { setOpenBusinessReg(false); await load(); }}
+      />
     </div>
   );
 }

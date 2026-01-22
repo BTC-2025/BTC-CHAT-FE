@@ -139,8 +139,25 @@ export default function AuthProvider({ children }) {
     // Note: We don't delete the private key from IndexedDB to allow re-login
   };
 
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return;
+
+      const { data } = await api.get("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const updatedUser = { ...data, token };
+      setUser(updatedUser);
+      localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Refresh user error:", error);
+    }
+  };
+
   return (
-    <AuthCtx.Provider value={{ user, privateKey, login, register, logout }}>
+    <AuthCtx.Provider value={{ user, privateKey, login, register, logout, refreshUser }}>
       {children}
     </AuthCtx.Provider>
   );
