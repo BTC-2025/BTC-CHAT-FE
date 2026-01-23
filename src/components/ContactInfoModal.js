@@ -9,6 +9,9 @@ export default function ContactInfoModal({ contact, open, onClose, onProductInqu
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        if (open) {
+            console.log('ContactInfoModal Open:', { contact, isBusiness: contact?.isBusiness });
+        }
         if (open && contact?.isBusiness) {
             loadBusinessData();
         } else {
@@ -110,8 +113,8 @@ export default function ContactInfoModal({ contact, open, onClose, onProductInqu
                 <div className="p-6 overflow-y-auto">
                     {activeTab === 'info' && (
                         <div className="space-y-5">
-                            {/* Standard User Info */}
-                            {!contact.isBusiness && (
+                            {/* Standard User Info (Show if NOT business OR if business data failed to load) */}
+                            {(!contact.isBusiness || !business) && (
                                 <>
                                     <div className="bg-background rounded-xl p-4 border border-background-dark/50">
                                         <label className="text-[10px] font-bold uppercase tracking-wider text-secondary-dark mb-1 block">About</label>
