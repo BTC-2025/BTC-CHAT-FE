@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { api, setAuth } from "../api";
 import { socket } from "../socket";
-import { generateKeyPair, exportKey, importKey } from "../utils/cryptoUtils";
+import { generateKeyPair, exportKey } from "../utils/cryptoUtils";
 
 const AuthCtx = createContext(null);
 export const useAuth = () => useContext(AuthCtx);
@@ -86,7 +86,7 @@ export default function AuthProvider({ children }) {
       socket.off("account:disabled", handleDisable);
       api.interceptors.response.eject(interceptor);
     };
-  }, [user?.id]);
+  }, [user]);
 
   const login = async (phone, password) => {
     const { data } = await api.post("/auth/login", { phone, password });

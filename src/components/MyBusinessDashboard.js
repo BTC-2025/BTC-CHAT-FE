@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { API_BASE } from '../api';
 import { useAuth } from '../context/AuthContext';
+
+const PRESET_GREETINGS = [
+    "Hello! How can we help you today?",
+    "Welcome! We're here to assist you with anything you need.",
+    "Hi there! Check out our latest products while we get back to you.",
+    "Thanks for reaching out! Someone will be with you shortly.",
+    "Greetings! We appreciate your interest in our business."
+];
 
 export default function MyBusinessDashboard({ onBack }) {
     const { user } = useAuth();
@@ -24,19 +32,9 @@ export default function MyBusinessDashboard({ onBack }) {
     const [selectedGreeting, setSelectedGreeting] = useState('');
     const [isSavingGreeting, setIsSavingGreeting] = useState(false);
 
-    const PRESET_GREETINGS = [
-        "Hello! How can we help you today?",
-        "Welcome! We're here to assist you with anything you need.",
-        "Hi there! Check out our latest products while we get back to you.",
-        "Thanks for reaching out! Someone will be with you shortly.",
-        "Greetings! We appreciate your interest in our business."
-    ];
 
-    useEffect(() => {
-        loadData();
-    }, []);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             const [businessRes, productsRes] = await Promise.all([
                 axios.get(`${API_BASE}/business/my-business`, {
@@ -61,7 +59,13 @@ export default function MyBusinessDashboard({ onBack }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [user?.token]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+
 
     const handleAddProduct = async (e) => {
         e.preventDefault();

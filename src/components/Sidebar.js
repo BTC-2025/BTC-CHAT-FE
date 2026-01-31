@@ -11,7 +11,7 @@ import ProfileModal from "./ProfileModal";
 import BlockedList from "./BlockedList"; // ✅ Added
 import CallHistory from "./CallHistory"; // ✅ Added
 import BusinessRegistrationModal from "./BusinessRegistrationModal"; // ✅ Business
-import MyBusinessDashboard from "./MyBusinessDashboard"; // ✅ Business
+
 import CommunityCreateModal from "./CommunityCreateModal"; // ✅ Community
 import CommunityManageModal from "./CommunityManageModal"; // ✅ Community
 import NavRail from "./NavRail";
@@ -51,7 +51,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
       } catch (e) { console.error("Failed to fetch connected apps", e); }
     };
     fetchApps();
-  }, []);
+  }, [user.token]);
 
   const toggleSetting = async (key) => {
     const newVal = !notifSettings[key];

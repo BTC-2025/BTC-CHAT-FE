@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import { useAuth } from "../context/AuthContext";
@@ -18,14 +18,9 @@ export default function CommunityManageModal({ open, onClose, communityId }) {
     const [newGroupDesc, setNewGroupDesc] = useState("");
     const [myGroups, setMyGroups] = useState([]); // ✅ List of available groups
 
-    useEffect(() => {
-        if (open && communityId) {
-            fetchCommunity();
-            fetchMyGroups();
-        }
-    }, [open, communityId]);
 
-    const fetchMyGroups = async () => {
+
+    const fetchMyGroups = useCallback(async () => {
         try {
             const { data } = await axios.get(`${API_BASE}/communities/my-groups`, {
                 headers: { Authorization: `Bearer ${user.token}` }
@@ -34,9 +29,9 @@ export default function CommunityManageModal({ open, onClose, communityId }) {
         } catch (err) {
             console.error("Failed to fetch my groups:", err);
         }
-    };
+    }, [user.token]);
 
-    const fetchCommunity = async () => {
+    const fetchCommunity = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await axios.get(`${API_BASE}/communities/${communityId}`, {
@@ -48,7 +43,14 @@ export default function CommunityManageModal({ open, onClose, communityId }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [communityId, user.token]);
+
+    useEffect(() => {
+        if (open && communityId) {
+            fetchCommunity();
+            fetchMyGroups();
+        }
+    }, [open, communityId, fetchCommunity, fetchMyGroups]);
 
     const handleAddMember = async (e) => {
         e.preventDefault();
