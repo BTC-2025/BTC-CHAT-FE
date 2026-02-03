@@ -23,7 +23,7 @@ export default function ContactInfoModal({ contact, open, onClose, onProductInqu
         } finally {
             setLoading(false);
         }
-    }, [contact.id]);
+    }, [contact?.id]);
 
     useEffect(() => {
         if (open) {
