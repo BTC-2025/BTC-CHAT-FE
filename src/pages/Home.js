@@ -187,15 +187,7 @@ export default function Home() {
   const sidebarRef = useRef(null);
   const isResizing = useRef(false);
 
-  // Handle Resize
-  const handleMouseDown = useCallback((e) => {
-    e.preventDefault();
-    isResizing.current = true;
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.body.style.cursor = "col-resize";
-  }, []);
-
+  // Handle Resize - Define handlers in stable order
   const handleMouseMove = useCallback((e) => {
     if (!isResizing.current) return;
     const newWidth = e.clientX; // Simplified for left-aligned sidebar
@@ -209,7 +201,15 @@ export default function Home() {
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
     document.body.style.cursor = "default";
-  }, []);
+  }, [handleMouseMove]);
+
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    document.body.style.cursor = "col-resize";
+  }, [handleMouseMove, handleMouseUp]);
 
   useEffect(() => {
     return () => {
