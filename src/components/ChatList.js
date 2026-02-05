@@ -2,7 +2,7 @@ import ChatListItem from "./ChatListItem.js";
 
 export default function ChatList({ items, activeId, onOpen, userId }) {
   return (
-    <div className="overflow-y-auto divide-y divide-slate-800">
+    <div className="overflow-y-auto divide-y divide-white/20">
       {items.map(item => (
         <ChatListItem
           key={item.id}

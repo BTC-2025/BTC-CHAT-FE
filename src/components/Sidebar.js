@@ -306,7 +306,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
           <div className="space-y-4">
             <button
               onClick={() => setOpenProfile(true)}
-              className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all"
+              className="w-full flex items-center justify-between p-4 bg-white/60 hover:bg-white/80 rounded-2xl transition-all shadow-sm border border-white/40 text-slate-800"
             >
               <span>Account Information</span>
               <svg className="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
@@ -335,7 +335,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
               </button>
             )}
 
-            <div className="p-4 bg-white/5 rounded-2xl space-y-4">
+            <div className="p-4 bg-white/60 rounded-2xl space-y-4 shadow-sm border border-white/40 text-slate-800">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold">Sound Notifications</div>
@@ -362,7 +362,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
               </div>
             </div>
 
-            <div className="p-4 bg-white/5 rounded-2xl space-y-4">
+            <div className="p-4 bg-white/60 rounded-2xl space-y-4 shadow-sm border border-white/40 text-slate-800">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold text-emerald-400">Disappearing Messages</div>
@@ -382,7 +382,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
                       alert("Failed to update retention policy");
                     }
                   }}
-                  className="bg-[#0f172a] text-xs font-bold py-1 px-2 rounded-lg border border-white/10 outline-none focus:ring-1 focus:ring-primary"
+                  className="bg-white/80 text-[#0f172a] text-xs font-bold py-1 px-2 rounded-lg border border-white/20 outline-none focus:ring-1 focus:ring-primary shadow-sm"
                 >
                   <option value={0}>Off</option>
                   <option value={1}>24 Hours</option>
@@ -432,17 +432,17 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
       if (viewingCommunity && communityDetails) {
         // Drill Down View
         return (
-          <div className="flex-1 flex flex-col h-full bg-[#040712]">
+          <div className="flex-1 flex flex-col h-full bg-transparent">
             {/* Header */}
-            <div className="p-4 border-b border-white/5 flex items-center gap-4 sticky top-0 bg-[#040712]/80 backdrop-blur-md z-10 animate-fade-in">
+            <div className="p-4 border-b border-white/20 flex items-center gap-4 sticky top-0 bg-white/60 backdrop-blur-md z-10 animate-fade-in shadow-sm">
               <button
                 onClick={() => { setViewingCommunity(null); setCommunityDetails(null); }}
-                className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl transition-all hover:scale-105 active:scale-95 text-white/70 hover:text-white"
+                className="w-10 h-10 flex items-center justify-center bg-white/40 hover:bg-white/60 rounded-xl transition-all hover:scale-105 active:scale-95 text-slate-600 hover:text-slate-900 shadow-sm"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
               </button>
               <div className="flex-1 min-w-0">
-                <h2 className="font-black text-xl leading-tight truncate text-white tracking-tight">{communityDetails.name}</h2>
+                <h2 className="font-black text-xl leading-tight truncate text-slate-900 tracking-tight">{communityDetails.name}</h2>
                 <p className="text-[10px] text-secondary font-bold uppercase tracking-widest mt-0.5">Community</p>
               </div>
               {communityDetails.admins?.includes(user?.id) && (
@@ -604,7 +604,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
               {activeTab === 'social' && socialView === 'contacts' && (
                 <button
                   onClick={() => { setSocialView('apps'); setSelectedApp(null); }}
-                  className="p-2 -ml-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white transition-all"
+                  className="p-2 -ml-2 rounded-full hover:bg-white/20 text-slate-500 hover:text-slate-800 transition-all"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
                 </button>
@@ -725,7 +725,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
   };
 
   return (
-    <div className="flex flex-col-reverse md:flex-row h-full bg-[#040712] overflow-hidden">
+    <div className="flex flex-col-reverse md:flex-row h-full overflow-hidden glass-panel border-r border-white/40">
       <NavRail
         activeTab={activeTab}
         onTabChange={(id) => {

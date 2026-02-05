@@ -455,7 +455,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="p-3 bg-white/80 border border-background-dark/50 rounded-2xl hover:bg-background-dark transition-all duration-200 disabled:opacity-50"
+            className="p-3 glass-panel hover:bg-white/60 rounded-2xl transition-all duration-200 disabled:opacity-50 text-slate-500 hover:text-primary shadow-sm"
             title="Attach file"
           >
             {uploading ? (
@@ -474,7 +474,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
           {!val.trim() && attachments.length === 0 && (
             <button
               onClick={() => setShowPicker(!showPicker)}
-              className={`p-3 border rounded-2xl transition-all duration-200 ${showPicker || scheduledAt ? 'bg-blue-500/10 border-blue-500/50 text-blue-500' : 'bg-white/80 border-background-dark/50 text-primary hover:bg-background-dark'}`}
+              className={`p-3 border rounded-2xl transition-all duration-200 shadow-sm ${showPicker || scheduledAt ? 'bg-primary/10 border-primary/20 text-primary' : 'glass-panel hover:bg-white/60 text-slate-500 hover:text-primary'}`}
               title="Schedule message"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -494,7 +494,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
 
           <textarea
             ref={textareaRef}
-            className="flex-1 bg-white/80 backdrop-blur-sm border border-background-dark/50 rounded-2xl px-4 py-3 outline-none resize-none overflow-y-auto text-sm sm:text-base focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all duration-200 text-primary placeholder:text-primary/40 shadow-sm"
+            className="flex-1 glass-input rounded-2xl px-4 py-3 outline-none resize-none overflow-y-auto text-sm sm:text-base focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200 text-slate-800 placeholder:text-slate-400 shadow-inner"
             placeholder="Type a message..."
             value={val}
             onChange={handleChange}
@@ -508,7 +508,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
             <button
               onClick={startRecording}
               disabled={uploading}
-              className="p-3 bg-secondary/10 border border-secondary/30 rounded-2xl hover:bg-secondary/20 transition-all duration-200 disabled:opacity-50"
+              className="p-3 glass-panel hover:bg-white/60 rounded-2xl transition-all duration-200 disabled:opacity-50 text-slate-500 hover:text-secondary shadow-sm"
               title="Record voice message"
             >
               <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

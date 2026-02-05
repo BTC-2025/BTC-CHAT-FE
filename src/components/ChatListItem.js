@@ -52,9 +52,9 @@ export default function ChatListItem({ item, active, onClick, userId }) {
       <div className="group relative">
         <button
           onClick={onClick}
-          className={`w-full text-left px-5 py-4 transition-all duration-300 relative overflow-hidden ${active
-            ? "bg-white/[0.05] shadow-inner ring-1 ring-white/10"
-            : "hover:bg-white/[0.02]"
+          className={`w-full text-left px-5 py-4 transition-all duration-300 relative overflow-hidden animate-slide-up ${active
+            ? "bg-white/80 shadow-soft ring-1 ring-white/60"
+            : "hover:bg-white/40"
             }`}
         >
           {/* Active Indicator Glow */}
@@ -68,9 +68,9 @@ export default function ChatListItem({ item, active, onClick, userId }) {
               className="relative flex-shrink-0 cursor-pointer"
               onClick={handleAvatarClick}
             >
-              <div className={`w-12 h-12 rounded-2xl grid place-items-center text-sm font-black uppercase shadow-2xl transition-all duration-300 group-hover:scale-105 group-hover:rotate-3 overflow-hidden border border-white/10 ${item.isGroup
-                ? "bg-gradient-to-br from-[#1e293b] to-[#334155] text-white/90"
-                : "bg-gradient-to-br from-blue-600 to-indigo-700 text-white"
+              <div className={`w-12 h-12 rounded-2xl grid place-items-center text-sm font-black uppercase shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:rotate-3 overflow-hidden border border-white/20 ${item.isGroup
+                ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
+                : "bg-gradient-to-br from-blue-500 to-indigo-600 text-white"
                 }`}>
                 {(item.isGroup ? item.avatar : item.other?.avatar) ? (
                   <img src={item.isGroup ? item.avatar : item.other.avatar} alt="" className="w-full h-full object-cover" />
@@ -89,7 +89,7 @@ export default function ChatListItem({ item, active, onClick, userId }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`font-bold truncate text-[15px] tracking-tight transition-colors ${active ? "text-white" : "text-white/80 group-hover:text-white"
+                  <div className={`font-bold truncate text-[15px] tracking-tight transition-colors ${active ? "text-primary-dark" : "text-slate-800 group-hover:text-primary-dark"
                     }`}>
                     {displayName}
                   </div>
@@ -101,17 +101,17 @@ export default function ChatListItem({ item, active, onClick, userId }) {
                     </span>
                   )}
                   {item.isArchived && (
-                    <span className="text-[9px] bg-white/10 text-white/50 px-1.5 py-0.5 rounded uppercase tracking-tighter">Archived</span>
+                    <span className="text-[9px] bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-tighter">Archived</span>
                   )}
                 </div>
 
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest flex-shrink-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex-shrink-0">
                   {item.lastAt ? dayjs(item.lastAt).fromNow(true) : ""}
                 </span>
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className={`text-sm truncate transition-colors max-w-[80%] ${item.unread > 0 ? "text-white/90 font-bold" : "text-white/40"
+                <div className={`text-sm truncate transition-colors max-w-[80%] ${item.unread > 0 ? "text-slate-900 font-bold" : "text-slate-500"
                   }`}>
                   {decryptedLast || item.lastMessage || "No messages yet"}
                 </div>

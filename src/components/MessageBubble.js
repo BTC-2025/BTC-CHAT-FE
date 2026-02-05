@@ -323,7 +323,7 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
         return (
           <span
             key={i}
-            className={`font-bold ${isMe ? "bg-yellow-500/40 text-white px-1 rounded" : (mine ? "text-secondary" : "text-primary-light")}`}
+            className={`font-bold ${isMe ? "bg-yellow-400/30 text-slate-900 px-1 rounded" : (mine ? "text-secondary" : "text-primary-light")}`}
           >
             {part}
           </span>
@@ -340,7 +340,7 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
         className={`relative inline-block rounded-2xl px-4 py-2.5 animate-fade-in max-w-[75%] ${mine
           ? "bg-gradient-to-br from-primary to-primary-light text-white rounded-br-md shadow-bubble"
           : isMentioned
-            ? "bg-yellow-500/10 border-2 border-yellow-500/50 text-white rounded-bl-md shadow-[0_0_15px_rgba(234,179,8,0.3)]" // ✅ Highlight style
+            ? "bg-yellow-50/90 border border-yellow-400 text-slate-900 rounded-bl-md shadow-[0_0_15px_rgba(234,179,8,0.3)]" // ✅ Highlight style
             : "bg-white text-primary rounded-bl-md shadow-card border border-background-dark/50"
           }`}
       >
