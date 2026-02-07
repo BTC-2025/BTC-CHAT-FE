@@ -250,37 +250,51 @@ export default function ContactInfoModal({ contact, open, onClose, onProductInqu
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {products.map(product => (
-                                        <div key={product._id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
-                                            <div className="mb-2">
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <h4 className="font-bold text-gray-900 line-clamp-1" title={product.name}>{product.name}</h4>
-                                                    {product.inStock ?
-                                                        <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0 ml-2">Stock</span> :
-                                                        <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0 ml-2">Out</span>
-                                                    }
+                                    {products.map(product => {
+                                        const cartItem = cart.find(item => item._id === product._id);
+                                        const inCart = !!cartItem;
+                                        const cartQuantity = cartItem?.quantity || 0;
+
+                                        return (
+                                            <div key={product._id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                                                <div className="mb-2">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h4 className="font-bold text-gray-900 line-clamp-1" title={product.name}>{product.name}</h4>
+                                                        {product.inStock ?
+                                                            <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0 ml-2">Stock</span> :
+                                                            <span className="text-[10px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0 ml-2">Out</span>
+                                                        }
+                                                    </div>
+                                                    <p className="text-primary font-black text-lg">
+                                                        {product.currency === 'INR' ? '₹' : product.currency} {product.price}
+                                                    </p>
                                                 </div>
-                                                <p className="text-primary font-black text-lg">
-                                                    {product.currency === 'INR' ? '₹' : product.currency} {product.price}
-                                                </p>
+
+                                                {product.description && (
+                                                    <p className="text-gray-500 text-xs line-clamp-2 mb-4 flex-1">{product.description}</p>
+                                                )}
+
+                                                <button
+                                                    onClick={() => addToCart(product)}
+                                                    disabled={!product.inStock}
+                                                    className={`w-full py-2 rounded-lg font-bold text-sm transition-colors mt-auto flex items-center justify-center gap-2 ${!product.inStock
+                                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                            : inCart
+                                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                                : 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
+                                                        }`}
+                                                >
+                                                    {!product.inStock ? (
+                                                        <><span>🛒</span> Out of Stock</>
+                                                    ) : inCart ? (
+                                                        <><span>✓</span> In Cart ({cartQuantity})</>
+                                                    ) : (
+                                                        <><span>🛒</span> Add to Cart</>
+                                                    )}
+                                                </button>
                                             </div>
-
-                                            {product.description && (
-                                                <p className="text-gray-500 text-xs line-clamp-2 mb-4 flex-1">{product.description}</p>
-                                            )}
-
-                                            <button
-                                                onClick={() => addToCart(product)}
-                                                disabled={!product.inStock}
-                                                className={`w-full py-2 rounded-lg font-bold text-sm transition-colors mt-auto flex items-center justify-center gap-2 ${product.inStock
-                                                        ? 'bg-primary/10 text-primary hover:bg-primary hover:text-white'
-                                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                    }`}
-                                            >
-                                                <span>🛒</span> {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                                            </button>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
