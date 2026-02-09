@@ -312,7 +312,60 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
               <svg className="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
             </button>
 
+            {/* About and Email Fields */}
+            <div className="p-4 bg-white/60 rounded-2xl space-y-4 shadow-sm border border-white/40 text-slate-800">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">About</label>
+                <textarea
+                  defaultValue={user?.about || ""}
+                  onBlur={async (e) => {
+                    const newAbout = e.target.value;
+                    try {
+                      await axios.put(
+                        `${API_BASE}/users/profile`,
+                        { about: newAbout },
+                        { headers: { Authorization: `Bearer ${user.token}` } }
+                      );
+                      const updatedUser = { ...user, about: newAbout };
+                      localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+                    } catch (err) {
+                      console.error("Failed to update about:", err);
+                      alert("Failed to update about");
+                    }
+                  }}
+                  rows={3}
+                  className="w-full bg-white/80 text-slate-800 text-sm rounded-lg px-3 py-2 border border-white/20 outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                  placeholder="Write something about yourself..."
+                />
+              </div>
+              <div className="space-y-2 border-t border-white/20 pt-4">
+                <label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Email</label>
+                <input
+                  type="email"
+                  defaultValue={user?.email || ""}
+                  onBlur={async (e) => {
+                    const newEmail = e.target.value;
+                    try {
+                      await axios.put(
+                        `${API_BASE}/users/profile`,
+                        { email: newEmail },
+                        { headers: { Authorization: `Bearer ${user.token}` } }
+                      );
+                      const updatedUser = { ...user, email: newEmail };
+                      localStorage.setItem("auth_user", JSON.stringify(updatedUser));
+                    } catch (err) {
+                      console.error("Failed to update email:", err);
+                      alert("Failed to update email");
+                    }
+                  }}
+                  className="w-full bg-white/80 text-slate-800 text-sm rounded-lg px-3 py-2 border border-white/20 outline-none focus:ring-2 focus:ring-primary/50"
+                  placeholder="your.email@example.com"
+                />
+              </div>
+            </div>
+
             {/* My Business Button - Removed from here, now in main nav */}
+
 
             {/* Business Registration Button - Only show if user doesn't have a business */}
             {!user?.isBusiness && (
@@ -581,11 +634,6 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
       );
     }
 
-    // Filter online users (only for 1:1 chats)
-    const onlineUsers = chats
-      .filter(c => !c.isGroup && c.other?.isOnline && !c.isArchived)
-      .map(c => c.other);
-
     const getTitle = () => {
       if (activeTab === 'groups') return 'Groups';
       if (activeTab === 'favorites') return 'Favorites';
@@ -630,33 +678,6 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
           </div>
           <SearchBar onOpen={async (chat) => { onOpenChat(chat); await load(); }} />
         </div>
-
-        {/* Online Section (Horizontal Scroll) */}
-        {(activeTab === "chats" || activeTab === "social") && onlineUsers.length > 0 && ( // ✅ Show online users in social too
-          <div className="px-5 py-2">
-            <div className="text-[11px] font-bold text-light tracking-widest uppercase mb-2">Online</div>
-            <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar no-scrollbar">
-              {onlineUsers.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => onOpenChat(chats.find(c => !c.isGroup && c.other.id === u.id))}
-                  className="flex-shrink-0 relative group"
-                >
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 group-hover:border-primary/50 transition-all">
-                    {u.avatar ? (
-                      <img src={u.avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-primary/20 text-primary flex items-center justify-center font-bold">
-                        {u.full_name?.[0] || '?'}
-                      </div>
-                    )}
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-accent border-[3px] border-[#040712] rounded-full" />
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* List Container */}
         <div className="flex-1 overflow-y-auto custom-scrollbar pt-2">
