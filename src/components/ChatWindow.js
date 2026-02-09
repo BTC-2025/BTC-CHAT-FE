@@ -839,7 +839,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       </div>
 
       {/* ✅ Input */}
-      <div className="border-t border-background-dark p-2 sm:p-3 bg-white">
+      <div className="border-t border-background-dark p-2 sm:p-3 bg-white rounded-b-[55px]">
         {blockStatus.isBlocked || chat.other?.isReportedByMe || chat.other?.hasReportedMe ? (
           <div className="text-center text-primary/50 py-2 text-sm italic">
             {chat.other?.isReportedByMe

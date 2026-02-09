@@ -159,7 +159,7 @@ export default function StatusPage({ onBack }) {
     );
 
     return (
-        <div className="h-screen w-screen bg-slate-950 flex relative overflow-hidden select-none animate-fade-in">
+        <div className="h-full w-full bg-slate-950 flex relative overflow-hidden select-none animate-fade-in">
             {/* Background Layer (Blurred) */}
             {currentStatus && (
                 <div

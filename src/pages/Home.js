@@ -1,4 +1,5 @@
 import Sidebar from "../components/Sidebar.js";
+import NavRail from "../components/NavRail.js";
 import ChatWindow from "../components/ChatWindow.js";
 import CallModal from "../components/CallModal.js";
 import StatusPage from "./StatusPage.js";
@@ -182,45 +183,26 @@ export default function Home() {
     });
   };
 
-  // ✅ Sidebar resize state
-  const [sidebarWidth, setSidebarWidth] = useState(420);
-  const sidebarRef = useRef(null);
-  const isResizing = useRef(false);
 
-  // Handle Resize - Define handlers in stable order
-  const handleMouseMove = useCallback((e) => {
-    if (!isResizing.current) return;
-    const newWidth = e.clientX; // Simplified for left-aligned sidebar
-    if (newWidth > 280 && newWidth < 600) {
-      setSidebarWidth(newWidth);
-    }
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isResizing.current = false;
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-    document.body.style.cursor = "default";
-  }, [handleMouseMove]);
-
-  const handleMouseDown = useCallback((e) => {
-    e.preventDefault();
-    isResizing.current = true;
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    document.body.style.cursor = "col-resize";
-  }, [handleMouseMove, handleMouseUp]);
-
-  useEffect(() => {
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
 
 
   if (view === "status") {
-    return <StatusPage onBack={() => setView("chats")} />;
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-background flex">
+        <NavRail
+          activeTab="status"
+          onTabChange={(tab) => {
+            if (tab === 'chats') setView('chats');
+            else if (tab === 'my-business') setView('my-business');
+            else if (tab === 'status') return; // Already here
+            else setView('chats'); // Default back to chats for other tabs for now
+          }}
+        />
+        <div className="flex-1 h-full relative">
+          <StatusPage onBack={() => setView("chats")} />
+        </div>
+      </div>
+    );
   }
 
   if (view === "my-business") {
@@ -234,25 +216,18 @@ export default function Home() {
         {/* ✅ SIDEBAR - Hidden on mobile when chat is open */}
         {/* Added Resizable Style */}
         <div
-          ref={sidebarRef}
-          style={{ width: window.innerWidth >= 768 ? sidebarWidth : '100%' }}
           className={`
           ${activeChat ? 'hidden' : 'flex'} 
           md:flex
           h-full overflow-hidden border-r border-background-dark
           flex-col relative
+          w-full md:w-[420px] flex-shrink-0
         `}>
           <Sidebar
             onOpenChat={handleOpenChat}
             activeChatId={activeChat?.id}
             onViewStatus={() => setView("status")}
             onViewMyBusiness={() => setView("my-business")}
-          />
-
-          {/* Resize Handle */}
-          <div
-            className="hidden md:block absolute right-0 top-0 w-1 h-full cursor-col-resize hover:bg-primary/50 transition-colors z-50"
-            onMouseDown={handleMouseDown}
           />
         </div>
 
