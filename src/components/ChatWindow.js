@@ -613,7 +613,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
                         }}
                         className={`w-full px-4 py-3 text-left text-sm font-medium transition-colors flex items-center gap-3 ${chat.other?.isFavorite
                           ? "text-yellow-400 hover:bg-yellow-500/5"
-                          : "text-white hover:bg-white/5"
+                          : "text-black hover:bg-black/5"
                           }`}
                         title={chat.other?.isFavorite ? "Remove from favorites" : "Add to favorites"}
                       >
@@ -625,7 +625,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
 
                       <button
                         onClick={handleArchive}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-white hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-blac hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -635,7 +635,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
 
                       <button
                         onClick={handleClearChat}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-white hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-black hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -699,7 +699,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
                       {/* ✅ Assign Task Button */}
                       <button
                         onClick={() => { setShowMenu(false); setOpenTaskModal(true); }}
-                        className="w-full px-4 py-3 text-left text-sm font-medium text-white hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-blue hover:text-white hover:bg-white/5 transition-colors flex items-center gap-3"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -793,13 +793,13 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       {/* ✅ Messages Area */}
       <div
         ref={scrollerRef}
-        className="flex-1 overflow-y-auto p-3 sm:p-4 bg-background relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85))`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'local'
-        }}
+        className="flex-1 overflow-y-auto p-3 sm:p-4 bg-background relative bg-[#E9F4FF]"
+      // style={{
+      //   backgroundImage: `linear-gradient(rgba(15, 23, 42, 0.85), rgba(15, 23, 42, 0.85))`,
+      //   backgroundSize: 'cover',
+      //   backgroundPosition: 'center',
+      //   backgroundAttachment: 'local'
+      // }}
       >
         <div className="space-y-2 relative z-10">
           {(searchQuery ? messages.filter(m => m.body?.toLowerCase().includes(searchQuery.toLowerCase())) : messages).map((m, index, arr) => {
@@ -839,9 +839,9 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
       </div>
 
       {/* ✅ Input */}
-      <div className="border-t border-background-dark p-2 sm:p-3 bg-white rounded-b-[55px]">
+      <div className="p-2 sm:p-3 mx-3 mb-2">
         {blockStatus.isBlocked || chat.other?.isReportedByMe || chat.other?.hasReportedMe ? (
-          <div className="text-center text-primary/50 py-2 text-sm italic">
+          <div className="text-center text-primary/50 py-1 text-sm italic">
             {chat.other?.isReportedByMe
               ? "You have reported this user. Communication is disabled."
               : chat.other?.hasReportedMe
@@ -879,7 +879,15 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
         contact={chat.other}
         open={openContactInfo}
         onClose={() => setOpenContactInfo(false)}
-        onProductInquiry={handleProductInquiry} // ✅ Pass handler
+        onProductInquiry={handleProductInquiry}
+        chatId={chat.id}
+        blockStatus={blockStatus}
+        onBlock={handleBlock}
+        onUnblock={handleUnblock}
+        onReport={handleReportUser}
+        onClearChat={handleClearChat}
+        onArchiveChat={handleArchive}
+        isArchived={chat.isArchived}
       />
 
       {/* ✅ Forward Modal */}

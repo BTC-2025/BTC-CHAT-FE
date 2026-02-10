@@ -486,13 +486,13 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
 
       {/* Input Row */}
       {!recording && (
-        <div className="flex gap-3 items-end">
+        <div className="flex items-end gap-1.5 p-1 bg-white rounded-[2rem] shadow-float border border-white/60 backdrop-blur-xl relative z-20">
           {/* Plus Icon Attachment Menu */}
           <div className="relative attach-menu-container">
             <button
               onClick={() => setShowAttachMenu(!showAttachMenu)}
               disabled={uploading}
-              className={`p-3 glass-panel rounded-2xl transition-all duration-200 disabled:opacity-50 shadow-sm ${showAttachMenu ? 'bg-primary/20 text-primary' : 'hover:bg-white/60 text-slate-500 hover:text-primary'
+              className={`p-3 rounded-full transition-all duration-200 disabled:opacity-50 ${showAttachMenu ? 'bg-primary/20 text-primary' : 'hover:bg-gray-100 text-slate-500 hover:text-primary'
                 }`}
               title="Attach"
             >
@@ -545,6 +545,23 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
                   <span>Videos</span>
                 </button>
 
+                {/* Document */}
+                <button
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                    fileInputRef.current?.setAttribute('accept', '.pdf,.doc,.docx,.xls,.xlsx,.txt');
+                    setShowAttachMenu(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm font-semibold text-slate-700 hover:bg-orange-50 transition-colors flex items-center gap-3 group"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <span>Document</span>
+                </button>
+
                 {/* Task */}
                 <button
                   onClick={() => {
@@ -583,7 +600,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
           {/* Emoji Button */}
           <button
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className={`p-3 glass-panel rounded-2xl transition-all duration-200 shadow-sm ${showEmojiPicker ? 'bg-primary/20 text-primary' : 'hover:bg-white/60 text-slate-500 hover:text-primary'}`}
+            className={`p-3 rounded-full transition-all duration-200 ${showEmojiPicker ? 'bg-primary/20 text-primary' : 'hover:bg-gray-100 text-slate-500 hover:text-primary'}`}
             title="Add emoji"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -602,7 +619,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
 
           <textarea
             ref={textareaRef}
-            className="flex-1 glass-input rounded-2xl px-4 py-3 outline-none resize-none overflow-y-auto text-sm sm:text-base focus:ring-2 focus:ring-primary/20 focus:border-primary/30 transition-all duration-200 text-slate-800 placeholder:text-slate-400 shadow-inner"
+            className="flex-1 bg-transparent px-2 py-3 outline-none resize-none overflow-y-auto text-sm sm:text-base text-slate-800 placeholder:text-slate-400"
             placeholder="Type a message..."
             value={val}
             onChange={handleChange}
@@ -616,7 +633,7 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
             <button
               onClick={startRecording}
               disabled={uploading}
-              className="p-3 glass-panel hover:bg-white/60 rounded-2xl transition-all duration-200 disabled:opacity-50 text-slate-500 hover:text-secondary shadow-sm"
+              className="p-3 rounded-full hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 text-slate-500 hover:text-secondary"
               title="Record voice message"
             >
               <svg className="w-5 h-5 text-secondary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -627,9 +644,8 @@ export default function ChatInput({ onSend, chatId, replyTo, onCancelReply, memb
             <button
               onClick={submit}
               disabled={(!val.trim() && attachments.length === 0) || uploading}
-              className={`px-4 sm:px-5 py-3 bg-gradient-to-r ${scheduledAt ? 'from-blue-600 to-blue-400' : 'from-primary to-primary-light'} rounded-2xl hover:brightness-110 transition-all duration-200 font-semibold text-sm sm:text-base text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2`}
+              className={`p-3 rounded-full bg-gradient-to-r ${scheduledAt ? 'from-blue-600 to-blue-400' : 'from-primary to-primary-light'} hover:brightness-110 transition-all duration-200 text-white shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed`}
             >
-              <span className="hidden sm:inline">{scheduledAt ? 'Schedule' : 'Send'}</span>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {scheduledAt ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
