@@ -811,7 +811,7 @@ export default function ChatWindow({ chat, onBack, onStartCall }) {
               <div key={m._id}>
                 {showDate && (
                   <div className="flex justify-center my-6">
-                    <div className="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black text-white/60 tracking-widest uppercase ring-1 ring-white/5 shadow-xl">
+                    <div className="bg-white/60 text-black backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black tracking-widest uppercase ring-1 ring-white/5 shadow-xl">
                       {new Date(m.createdAt).toDateString() === new Date().toDateString() ? "Today" :
                         new Date(m.createdAt).toDateString() === new Date(Date.now() - 86400000).toDateString() ? "Yesterday" :
                           new Date(m.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
