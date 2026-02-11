@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import { API_BASE } from "../api";
 import SearchBar from "./SearchBar.js";
@@ -14,6 +14,8 @@ import BusinessRegistrationModal from "./BusinessRegistrationModal"; // ✅ Busi
 
 import CommunityCreateModal from "./CommunityCreateModal"; // ✅ Community
 import CommunityManageModal from "./CommunityManageModal"; // ✅ Community
+import NumberSearchSection from "./NumberSearchSection"; // ✅ New Search Section
+import CreateContactSection from "./CreateContactSection"; // ✅ New Contact Section
 import NavRail from "./NavRail";
 import { requestNotificationPermission, unsubscribeFromNotifications } from "../utils/notificationHelper";
 
@@ -26,6 +28,12 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
   const [openBusinessReg, setOpenBusinessReg] = useState(false); // ✅ Business
   const [openCommunityCreate, setOpenCommunityCreate] = useState(false); // ✅ Community
   const [openCommunityManage, setOpenCommunityManage] = useState(false); // ✅ Community
+  // const [openNumberSearch, setOpenNumberSearch] = useState(false); // ❌ Removed for Section
+  // const [openCreateContact, setOpenCreateContact] = useState(false); // ❌ Removed for Section
+
+  const [sidebarView, setSidebarView] = useState('default'); // 'default' | 'number-search' | 'create-contact'
+
+  const [showPlusMenu, setShowPlusMenu] = useState(false); // ✅ Plus Menu Logic
   const [viewingCommunity, setViewingCommunity] = useState(null); // ✅ Community ID when drilling down
   const [communityDetails, setCommunityDetails] = useState(null); // ✅ Community Data
   const [activeTab, setActiveTab] = useState("chats"); // chats, groups, calls, status, settings
@@ -33,7 +41,28 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
     JSON.parse(localStorage.getItem("notificationSettings") || '{"sound":true,"push":true}')
   );
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null); // ✅ Ref for menu
+  const plusMenuRef = useRef(null); // ✅ Ref for plus menu
   const [chatFilter, setChatFilter] = useState('all'); // ✅ Filter State
+
+  // ✅ Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target)) { // ✅ Close plus menu
+        setShowPlusMenu(false);
+      }
+    };
+
+    if (showMenu || showPlusMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu, showPlusMenu]);
 
   const handleMarkAllRead = () => {
     setChats((prev) => prev.map((c) => ({ ...c, unread: 0 })));
@@ -177,7 +206,7 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
   useEffect(() => {
     const onNewMessage = (msg) => {
       setChats((prev) => {
-        const chatExists = prev.some(c => c.id === msg.chat);
+        const chatExists = prev.some(c => String(c.id) === String(msg.chat));
 
         if (!chatExists) {
           // Discover new chat!
@@ -186,12 +215,32 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
         }
 
         const updated = prev.map((c) => {
-          if (c.id === msg.chat) {
+          if (String(c.id) === String(msg.chat)) {
             return {
               ...c,
-              lastMessage: msg.content,
+              lastMessage: (() => {
+                let lastMsg = msg.body;
+                if (msg.type && msg.type !== 'text') {
+                  if (msg.type === 'image') lastMsg = "Photo";
+                  else if (msg.type === 'video') lastMsg = "Video";
+                  else if (msg.type === 'audio') lastMsg = "Audio";
+                  else if (msg.type === 'file' || msg.type === 'document') {
+                    lastMsg = msg.body && !msg.body.startsWith('http') ? msg.body : "File";
+                  } else {
+                    lastMsg = msg.type ? (msg.type.charAt(0).toUpperCase() + msg.type.slice(1)) : "Attachment";
+                  }
+                } else if (msg.attachments && msg.attachments.length > 0) {
+                  const att = msg.attachments[0];
+                  if (att.type === 'image') lastMsg = "Photo";
+                  else if (att.type === 'video') lastMsg = "Video";
+                  else lastMsg = "File";
+                }
+                return lastMsg;
+              })(),
               lastAt: msg.createdAt,
               unread: (String(msg.sender) !== String(user?.id) && String(msg.sender?._id) !== String(user?.id) && String(msg.chat) !== String(activeChatId))
+                ? (c.unread || 0) + 1
+                : c.unread
             };
           }
           return c;
@@ -304,6 +353,44 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
   let displayChats = filteredChats;
 
   const renderContent = () => {
+    // ✅ New Views for embedded sections
+    if (sidebarView === 'number-search') {
+      return (
+        <div className="flex-1 flex flex-col h-full bg-[#0f172a]">
+          <NumberSearchSection
+            onBack={() => setSidebarView('default')}
+            onOpenChat={(chat) => {
+              setChats(prev => {
+                const exists = prev.find(c => c.id === chat.id);
+                if (exists) return prev;
+                return [chat, ...prev];
+              });
+              onOpenChat(chat);
+              setSidebarView('default');
+            }}
+          />
+        </div>
+      );
+    }
+    if (sidebarView === 'create-contact') {
+      return (
+        <div className="flex-1 flex flex-col h-full bg-[#0f172a]">
+          <CreateContactSection
+            onBack={() => setSidebarView('default')}
+            onOpenChat={(chat) => {
+              setChats(prev => {
+                const exists = prev.find(c => c.id === chat.id);
+                if (exists) return prev;
+                return [chat, ...prev];
+              });
+              onOpenChat(chat);
+              setSidebarView('default');
+            }}
+          />
+        </div>
+      );
+    }
+
     if (activeTab === "settings") {
       return (
         <div className="flex-1 p-6 space-y-6 overflow-y-auto custom-scrollbar">
@@ -674,14 +761,39 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
                   >
                     Join
                   </button>
-                  <button onClick={() => setOpenCreate(true)} className="w-8 h-8 flex items-center justify-center bg-secondary text-white rounded-lg hover:bg-secondary-dark transition-colors shadow-lg shadow-secondary/20" title="Create new group">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
-                  </button>
                 </>
               )}
 
+              {/* Plus Menu */}
+              <div className="relative z-50" ref={plusMenuRef}>
+                <button
+                  onClick={() => setShowPlusMenu(!showPlusMenu)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors text-slate-600 bg-secondary/10 text-secondary"
+                  title="Create New"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                </button>
+
+                {showPlusMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl overflow-hidden py-1 animate-fade-in origin-top-right">
+                    <button onClick={() => { setSidebarView('create-contact'); setShowPlusMenu(false); }} className="w-full text-left px-4 py-3 hover:bg-black/5 text-sm font-medium flex items-center gap-3 text-slate-700 transition-colors">
+                      <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                      New Contact
+                    </button>
+                    <button onClick={() => { setOpenCreate(true); setShowPlusMenu(false); }} className="w-full text-left px-4 py-3 hover:bg-black/5 text-sm font-medium flex items-center gap-3 text-slate-700 transition-colors">
+                      <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                      New Group
+                    </button>
+                    <button onClick={() => { setSidebarView('number-search'); setShowPlusMenu(false); }} className="w-full text-left px-4 py-3 hover:bg-black/5 text-sm font-medium flex items-center gap-3 text-slate-700 transition-colors">
+                      <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                      Dial Number
+                    </button>
+                  </div>
+                )}
+              </div>
+
               {/* Three Dot Menu */}
-              <div className="relative z-50">
+              <div className="relative z-50" ref={menuRef}>
                 <button
                   onClick={() => setShowMenu(!showMenu)}
                   className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors text-slate-600"
@@ -809,6 +921,9 @@ export default function Sidebar({ onOpenChat, activeChatId, onViewStatus, onView
             onViewStatus();
           } else if (id === 'my-business') {
             onViewMyBusiness?.();
+          } else if (id === 'ai-assistant') {
+            onOpenChat({ id: 'benly', name: 'Benly AI', isAI: true, avatar: null });
+            setActiveTab(id);
           } else {
             setActiveTab(id);
             if (id === 'settings') {

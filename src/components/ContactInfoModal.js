@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import axios from 'axios';
-import { API_BASE } from '../api';
+import { api } from '../api';
+import { useAuth } from "../context/AuthContext"; // ✅ Match MessageBubble imports
+import { decryptMessage } from "../utils/cryptoUtils"; // ✅ Match MessageBubble imports
 import ShoppingCartModal from './ShoppingCartModal';
 
 export default function ContactInfoModal({
@@ -15,14 +16,18 @@ export default function ContactInfoModal({
     onReport,
     onClearChat,
     onArchiveChat,
-    isArchived
+    isArchived,
+    messages = [] // ✅ Accept messages prop
 }) {
-    const [activeTab, setActiveTab] = useState('info'); // 'info', 'products', 'media', 'docs', 'links'
+    const { user, privateKey } = useAuth(); // ✅ Get auth context
+    const [activeTab, setActiveTab] = useState('info');
     const [business, setBusiness] = useState(null);
     const [products, setProducts] = useState([]);
     const [sharedContent, setSharedContent] = useState({ media: [], docs: [], links: [] });
     const [loading, setLoading] = useState(false);
     const [loadingMedia, setLoadingMedia] = useState(false);
+    const [commonGroups, setCommonGroups] = useState([]);
+    const [loadingGroups, setLoadingGroups] = useState(false);
 
     // Shopping cart state
     const [cart, setCart] = useState([]);
@@ -32,8 +37,8 @@ export default function ContactInfoModal({
         setLoading(true);
         try {
             const [businessRes, productsRes] = await Promise.all([
-                axios.get(`${API_BASE}/business/${contact.id}`),
-                axios.get(`${API_BASE}/business/${contact.id}/products`)
+                api.get(`/business/${contact.id}`),
+                api.get(`/business/${contact.id}/products`)
             ]);
             setBusiness(businessRes.data);
             setProducts(productsRes.data);
@@ -48,58 +53,81 @@ export default function ContactInfoModal({
         if (!chatId) return;
         setLoadingMedia(true);
         try {
-            const { data: messages } = await axios.get(`${API_BASE}/messages/${chatId}`);
-            console.log("Fetched messages:", messages.length, messages[0]);
+            // 1. Fetch server-side shared content (Media, Docs, unencrypted Links)
+            const { data } = await api.get(`/messages/${chatId}/shared-content`);
 
-            const media = [];
-            const docs = [];
-            const links = [];
+            // 2. Client-side Link Extraction (for E2EE)
+            const clientLinks = [];
             const linkRegex = /(https?:\/\/[^\s]+)/g;
 
-            messages.forEach(msg => {
-                // Filter Attachments
-                if (msg.attachments?.length > 0) {
-                    msg.attachments.forEach(att => {
-                        console.log("Processing attachment:", att, "Type:", att.type);
+            // Iterate provided messages to find links in encrypted bodies
+            for (const msg of messages) {
+                // Skip if deleted
+                if (msg.deletedForEveryone || (Array.isArray(msg.deletedFor) && msg.deletedFor.includes(user?.id))) continue;
 
-                        // ✅ Fallback type detection
-                        let type = att.type;
-                        if (!type && att.url) {
-                            const ext = att.url.split('.').pop().toLowerCase();
-                            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'heic'].includes(ext)) type = 'image';
-                            else if (['mp4', 'mov', 'webm', 'avi', 'mkv'].includes(ext)) type = 'video';
-                            else if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) type = 'audio';
-                            else type = 'file';
-                        }
+                let text = msg.body;
 
-                        if (type === 'image' || type === 'video') {
-                            media.push({ ...att, msgId: msg._id, createdAt: msg.createdAt });
-                        } else if (type !== 'audio') { // Exclude voice notes from docs
-                            docs.push({ ...att, msgId: msg._id, createdAt: msg.createdAt });
+                // Attempt decryption if needed
+                if (msg.encryptedBody && privateKey) {
+                    try {
+                        const myKeyObj = Array.isArray(msg.encryptedKeys)
+                            ? msg.encryptedKeys.find(k => String(k.user) === String(user?.id))
+                            : null;
+                        const encryptedKey = myKeyObj?.key || msg.encryptedKey;
+
+                        if (encryptedKey) {
+                            text = await decryptMessage(msg.encryptedBody, encryptedKey, privateKey);
                         }
-                    });
+                    } catch (e) {
+                        console.error("Link extraction decryption failed", e);
+                    }
                 }
 
-                // Extract Links
-                const foundLinks = msg.body?.match(linkRegex);
-                if (foundLinks) {
-                    foundLinks.forEach(link => {
-                        links.push({ url: link, msgId: msg._id, createdAt: msg.createdAt });
-                    });
+                if (text) {
+                    const matches = text.match(linkRegex);
+                    if (matches) {
+                        matches.forEach(url => {
+                            clientLinks.push({
+                                url,
+                                msgId: msg._id,
+                                createdAt: msg.createdAt
+                            });
+                        });
+                    }
                 }
-            });
+            }
+
+            // 3. Merge & Deduplicate Links
+            const allLinks = [...data.links, ...clientLinks];
+            const uniqueLinks = Array.from(new Map(allLinks.map(item => [item.url + item.msgId, item])).values());
+
+            // Sort by date desc
+            uniqueLinks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             setSharedContent({
-                media: media.reverse(),
-                docs: docs.reverse(),
-                links: links.reverse()
+                ...data,
+                links: uniqueLinks
             });
+
         } catch (error) {
             console.error("Failed to load shared content", error);
         } finally {
             setLoadingMedia(false);
         }
-    }, [chatId]);
+    }, [chatId, messages, user?.id, privateKey]);
+
+    const loadCommonGroups = useCallback(async () => {
+        if (!contact?.id) return;
+        setLoadingGroups(true);
+        try {
+            const { data } = await api.get(`/users/${contact.id}/common-groups`);
+            setCommonGroups(data);
+        } catch (error) {
+            console.error("Failed to load common groups", error);
+        } finally {
+            setLoadingGroups(false);
+        }
+    }, [contact?.id]);
 
     // Cart handlers
     const addToCart = (product) => {
@@ -148,7 +176,7 @@ export default function ContactInfoModal({
                 loadBusinessData();
             }
             loadSharedContent();
-        } else {
+            loadCommonGroups();
             // Reset
             setBusiness(null);
             setProducts([]);
@@ -156,7 +184,7 @@ export default function ContactInfoModal({
             setCart([]);
             setSharedContent({ media: [], docs: [], links: [] });
         }
-    }, [open, contact, loadBusinessData, loadSharedContent]);
+    }, [open, contact, loadBusinessData, loadSharedContent, loadCommonGroups]);
 
 
 
@@ -250,6 +278,7 @@ export default function ContactInfoModal({
                         <TabButton id="products" label="Products" count={products.length} />
                     )}
                     <TabButton id="media" label="Media" count={sharedContent.media.length} />
+                    <TabButton id="groups" label="Groups" count={commonGroups.length} />
                     <TabButton id="docs" label="Docs" count={sharedContent.docs.length} />
                     <TabButton id="links" label="Links" count={sharedContent.links.length} />
                 </div>
@@ -435,6 +464,41 @@ export default function ContactInfoModal({
                                             </div>
                                         );
                                     })}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {activeTab === 'groups' && (
+                        <div className="space-y-4">
+                            {loadingGroups ? (
+                                <div className="flex justify-center p-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            ) : commonGroups.length === 0 ? (
+                                <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                    <div className="text-4xl mb-3 opacity-50">👥</div>
+                                    <p className="text-gray-500 font-medium">No groups in common</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {commonGroups.map(group => (
+                                        <div key={group._id} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors border border-gray-100">
+                                            <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-gray-100 border border-gray-200">
+                                                {group.avatar ? (
+                                                    <img src={group.avatar} alt={group.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full grid place-items-center bg-primary/10 text-primary font-bold text-lg">
+                                                        {(group.name || "?")[0]}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-900">{group.name || "Unknown Group"}</h4>
+                                                <p className="text-xs text-gray-500 font-medium">{group.participantsCount} participants</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>

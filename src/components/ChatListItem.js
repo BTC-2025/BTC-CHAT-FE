@@ -79,9 +79,8 @@ export default function ChatListItem({ item, active, onClick, userId }) {
                 )}
               </div>
 
-              {/* Premium Online Pulse */}
               {isOnline && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-accent border-4 border-[#040712] rounded-full shadow-lg" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-emerald-500 border-4 border-white rounded-full shadow-lg" />
               )}
             </div>
 

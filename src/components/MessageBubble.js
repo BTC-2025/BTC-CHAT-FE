@@ -183,7 +183,7 @@
 // }
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dayjs from "dayjs";
 import { socket } from "../socket";
 import { useAuth } from "../context/AuthContext";
@@ -194,6 +194,25 @@ const REACTION_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply, onForward }) {
   const { user, privateKey } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // ✅ Handle click outside to close menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
+
   const [lightboxImage, setLightboxImage] = useState(null);
   const [decryptedBody, setDecryptedBody] = useState(null);
   const [decryptionFailed, setDecryptionFailed] = useState(false);
@@ -346,15 +365,18 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
     >
       {/* ✅ Chat Bubble with modern styling - fits content */}
       <div
-        className={`relative inline-block rounded-2xl px-4 py-2.5 animate-fade-in max-w-[75%] ${mine
-          ? "bg-gradient-to-br from-primary to-primary-light text-white rounded-br-md shadow-bubble"
-          : isMentioned
-            ? "bg-yellow-50/90 border border-yellow-400 text-slate-900 rounded-bl-md shadow-[0_0_15px_rgba(234,179,8,0.3)]" // ✅ Highlight style
-            : "bg-white text-primary rounded-bl-md shadow-card border border-background-dark/50"
+        className={`relative inline-block animate-fade-in max-w-[75%] ${message.attachments?.length > 0 && !message.body && message.attachments.every(att => att.type === 'image' || att.type === 'video')
+          ? "p-1 rounded-2xl" // Image/Video-only: minimal padding, no background
+          : `rounded-2xl px-4 py-2.5 ${mine
+            ? "bg-gradient-to-br from-primary to-primary-light text-white rounded-br-md shadow-bubble"
+            : isMentioned
+              ? "bg-yellow-50/90 border border-yellow-400 text-slate-900 rounded-bl-md shadow-[0_0_15px_rgba(234,179,8,0.3)]"
+              : "bg-white text-primary rounded-bl-md shadow-card border border-background-dark/50"
+          }`
           }`}
       >
         {/* ⋮ Menu - inside the bubble */}
-        <div className="absolute top-1 right-1 z-50">
+        <div className="absolute top-1 right-1 z-[100]" ref={menuRef}>
           <button
             className={`text-lg leading-none p-1 rounded transition-colors ${mine
               ? "text-white/50 hover:text-white hover:bg-white/10"
@@ -518,7 +540,7 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
                     href={att.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${mine ? "bg-white/10 hover:bg-white/20" : "bg-background-dark hover:bg-background-dark/80"
+                    className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${mine ? "bg-white/10 hover:bg-white/20" : "bg-slate-100 hover:bg-slate-200"
                       }`}
                   >
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -587,9 +609,6 @@ export default function MessageBubble({ message, mine, isGroup, isAdmin, onReply
         {/* ✅ Ticks + Time */}
         <div className={`text-[10px] text-right mt-1.5 flex gap-1.5 items-center justify-end font-medium ${mine ? "text-white/60" : "text-primary/40"
           }`}>
-          {message.encryptedBody && (
-            <span title="End-to-end encrypted" className="opacity-70">🔒</span>
-          )}
           <span>{dayjs(message.createdAt).format("HH:mm")}</span>
           {renderTicks()}
         </div>
