@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 
 export default function CreateContactModal({ onClose, onOpenChat }) {
     const { user } = useAuth();
-    const [name, setName] = useState("");
+
     const [phone, setPhone] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -16,19 +16,13 @@ export default function CreateContactModal({ onClose, onOpenChat }) {
         setError(null);
 
         try {
-            // NOTE: If there is a specific 'create contact' endpoint, use it. 
-            // For now, consistent with NumberSearchModal, we try to finding the user to start a chat.
-            // A real "Add to Contacts" feature would depend on the backend supporting a contacts list.
-            // Assuming the user just wants to start a chat with someone new.
-
-            const { data: users } = await axios.get(`${API_BASE}/users/search?query=${phone}`, {
+            // ✅ Use specific phone search endpoint
+            const { data: foundUser } = await axios.get(`${API_BASE}/users/search/${phone}`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
 
-            const foundUser = users.find(u => u.phone === phone || u.username === phone);
-
             if (foundUser) {
-                const { data: chat } = await axios.post(`${API_BASE}/chats`, { userId: foundUser._id }, {
+                const { data: chat } = await axios.post(`${API_BASE}/chats`, { userId: foundUser.id || foundUser._id }, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 onOpenChat(chat);
@@ -38,7 +32,11 @@ export default function CreateContactModal({ onClose, onOpenChat }) {
             }
         } catch (err) {
             console.error(err);
-            setError("Failed to add contact or find user.");
+            if (err.response?.status === 404) {
+                setError("User not found with this number.");
+            } else {
+                setError("Failed to add contact or find user.");
+            }
         } finally {
             setLoading(false);
         }

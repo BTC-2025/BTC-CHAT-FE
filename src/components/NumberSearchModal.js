@@ -46,15 +46,13 @@ export default function NumberSearchModal({ onClose, onOpenChat }) {
             // If the backend expects a userId for creating chat, we first need to find the user.
             // I'll try a search endpoint first.
 
-            const { data: users } = await axios.get(`${API_BASE}/users/search?query=${phoneNumber}`, {
+            const { data: foundUser } = await axios.get(`${API_BASE}/users/search/${phoneNumber}`, {
                 headers: { Authorization: `Bearer ${user.token}` }
             });
 
-            const foundUser = users.find(u => u.phone === phoneNumber || u.username === phoneNumber); // Adjust based on actual user model
-
             if (foundUser) {
                 // Create/Open chat
-                const { data: chat } = await axios.post(`${API_BASE}/chats`, { userId: foundUser._id }, {
+                const { data: chat } = await axios.post(`${API_BASE}/chats`, { userId: foundUser.id || foundUser._id }, {
                     headers: { Authorization: `Bearer ${user.token}` }
                 });
                 onOpenChat(chat);
@@ -67,7 +65,11 @@ export default function NumberSearchModal({ onClose, onOpenChat }) {
 
         } catch (err) {
             console.error(err);
-            setError("Failed to find user. Please check the number.");
+            if (err.response?.status === 404) {
+                setError("User not found with this number.");
+            } else {
+                setError("Failed to find user. Please check the number.");
+            }
         } finally {
             setLoading(false);
         }
