@@ -91,7 +91,7 @@ export default function StatusSection() {
                             </div>
                         )}
                     </div>
-                    <span className="text-[10px] font-semibold text-primary/70 group-hover:text-primary transition-colors">My Status</span>
+                    <span className="text-[10px] font-semibold text-primary/70 group-hover:text-primary transition-colors">My Flash</span>
                     <input type="file" hidden ref={fileInputRef} onChange={handleUpload} accept="image/*" />
                 </div>
 

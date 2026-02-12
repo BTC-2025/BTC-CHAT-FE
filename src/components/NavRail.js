@@ -12,7 +12,7 @@ export default function NavRail({ activeTab, onTabChange, onOpenProfile }) {
         { id: 'groups', icon: '👥', label: 'Groups' },
         ...(user?.isBusiness ? [{ id: 'my-business', icon: '🏢', label: 'My Business' }] : []),
         { id: 'calls', icon: '📞', label: 'Calls' },
-        { id: 'status', icon: '🕒', label: 'Status' },
+        { id: 'status', icon: '🕒', label: 'Flash' },
         { id: 'ai-assistant', icon: '🤖', label: 'AI Assistant', isAI: true },
     ];
 
